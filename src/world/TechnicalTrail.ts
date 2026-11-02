@@ -128,7 +128,8 @@ export function placeTechnicalRocks(rocks: RockField, patch: Heightmap, path: Po
   }
   // Descent: a couple of boulders to steer around.
   for (let t = TECH.descent[0] + 10; t < TECH.descent[1]; t += 11) {
-    const p = at(t, rng.range(-3.5, 3.5));
+    const r = rng.range(-3.5, 3.5);
+    const p = at(t, Math.sign(r || 1) * (1.9 + Math.abs(r) * 0.55)); // keep a clear lane in the middle
     rocks.add(p.x, patch.sample(p.x, p.z), p.z, rng.range(0.4, 0.7), { bury: 0.3 });
   }
   // Shoulders: boulders either side along the whole trail.

@@ -17,6 +17,7 @@ import { placeTechnicalRocks, gardenLine, TECH } from './world/TechnicalTrail';
 import { Rng } from './core/Random';
 import { Dust } from './world/Dust';
 import { buildHorizon } from './world/Horizon';
+import { loadScannedRocks } from './world/ScannedRocks';
 import { MAP_SIZE } from './world/Map01';
 import { VehicleAudio } from './vehicle/VehicleAudio';
 import { I18n, formatTime } from './ui/i18n';
@@ -96,6 +97,9 @@ class App {
     placeTechnicalRocks(rocks, this.map.patch, this.map.paths.get('technical')!, new Rng(77));
     rocks.finalize();
     scene.add(rocks.group);
+    if (!this.params.has('norocks')) loadScannedRocks(scene, physics, this.map.terrain, this.map.hm, this.map.paths, settings.preset.props)
+      .then((n) => { (window as unknown as { __scanned: number }).__scanned = n; })
+      .catch((e) => console.warn('scanned rocks failed', e));
     this.dust = new Dust(settings.preset.dust ? 600 : 120);
     scene.add(this.dust.points);
     this.audio = new VehicleAudio();

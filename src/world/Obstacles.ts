@@ -88,7 +88,11 @@ function prismGeometry(pts: [number, number][], width: number): THREE.BufferGeom
 /** Half-buried rock humps alternating left/right so one wheel lifts at a time. */
 function addHumps(physics: PhysicsWorld, hm: TerrainQuery, path: Polyline, def: TrailDef, group: THREE.Group, mat: THREE.Material, rng: Rng, noise: Noise): void {
   const { R, world } = physics;
-  const geo = new THREE.CapsuleGeometry(1, 1, 6, 14);
+  // Lumpy capsule so the half-buried humps read as weathered rock, not pipes.
+  const geo = new THREE.CapsuleGeometry(1, 1, 8, 16);
+  { const p = geo.getAttribute('position'); const v = new THREE.Vector3();
+    for (let i = 0; i < p.count; i++) { v.fromBufferAttribute(p, i); const n = 1 + 0.3 * noise.fbm(v.x * 3.1 + 3, v.y * 2.4 + v.z * 3.1, 3); p.setXYZ(i, v.x * n, v.y, v.z * n); }
+    geo.computeVertexNormals(); }
   const count = Math.floor((path.length - 140) / 9);
   const mesh = new THREE.InstancedMesh(geo, mat, count);
   mesh.castShadow = true; mesh.receiveShadow = true;
@@ -112,6 +116,10 @@ function addHumps(physics: PhysicsWorld, hm: TerrainQuery, path: Polyline, def: 
     world.createCollider(R.ColliderDesc.capsule(len / 2, r).setTranslation(x, y, z).setRotation({ x: q.x, y: q.y, z: q.z, w: q.w }).setFriction(1.0));
   }
   mesh.count = n;
+  // Darker, slightly varied tint per hump (multiplies the shared triplanar rock texture).
+  const tint = new Float32Array(count * 3);
+  for (let i = 0; i < count; i++) { const t = rng.range(0.55, 0.72); tint[i * 3] = t; tint[i * 3 + 1] = t * 0.95; tint[i * 3 + 2] = t * 0.86; }
+  mesh.instanceColor = new THREE.InstancedBufferAttribute(tint, 3);
   group.add(mesh);
   void def;
 }

@@ -82,6 +82,11 @@ node scripts/screenshot.mjs menu --url="http://localhost:5199/?lang=he"
 
 Vehicle numbers live in `src/vehicle/TrooperSpec.ts` (mass, suspension, torque curve, gear ratios, grip per surface, sand drag). Trail routes are in `src/trails/trails.ts`; the base map in `src/world/Map01.ts`; the 1 m technical-trail patch (sections, ledges, rock layout) in `src/world/TechnicalTrail.ts`.
 
+## Credits
+
+- Terrain textures: [Poly Haven](https://polyhaven.com), CC0 (`public/textures/CREDITS.md`)
+- Rock models: Poly Haven Namaqualand boulders, CC0, simplified with glTF-Transform (`public/models/rocks/CREDITS.md`)
+
 ## Roadmap
 
 - Replace the procedural Trooper body with a GLB model
