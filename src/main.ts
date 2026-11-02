@@ -12,6 +12,8 @@ import { buildObstacles } from './world/Obstacles';
 import { I18n, formatTime } from './ui/i18n';
 import { Hud } from './ui/Hud';
 import { Menu } from './ui/Menu';
+import { TouchControls } from './ui/TouchControls';
+import { isMobile } from './core/Settings';
 import { TrailRunner, RESET_PENALTY_S } from './trails/TrailRunner';
 import { TrailMarkers } from './trails/Markers';
 import { TRAILS, trailById, type TrailDef } from './trails/trails';
@@ -31,6 +33,8 @@ class App {
   free!: FreeCamera;
   hud!: Hud;
   menu!: Menu;
+  touch!: TouchControls;
+  touchMode = false;
   i18n!: I18n;
   mode: Mode = 'menu';
   camMode: 'chase' | 'cockpit' | 'free' = 'chase';
@@ -78,6 +82,11 @@ class App {
     if (this.params.has('orbit')) this.chase.orbitLock = Number(this.params.get('orbit'));
 
     this.hud = new Hud(ui, this.i18n);
+    this.touch = new TouchControls(ui, input, this.i18n);
+    this.touchMode = isMobile() || this.params.has('touch');
+    this.touch.setInvert(settings.data.invertSteerTouch);
+    settings.onChange((d) => this.touch.setInvert(d.invertSteerTouch));
+    if (this.touchMode) { this.hud.el.classList.add('touch-mode'); const hint = document.createElement('div'); hint.className = 'rotate-hint enabled'; hint.textContent = this.i18n.lang === 'he' ? 'סובב את הטלפון לרוחב' : 'Rotate your phone to landscape'; ui.appendChild(hint); ui.classList.add('touch-mode'); }
     this.menu = new Menu(ui, this.i18n, settings, game.save, {
       startTrail: (def) => this.startTrail(def),
       freeRoam: () => this.startFree(),
@@ -104,6 +113,7 @@ class App {
     this.vehicle.reset(new THREE.Vector3(0, 0, 0), Math.PI * 0.75);
     this.vehicle.setMode('4H');
     this.hud.show(false);
+    this.touch.show(false);
     this.menu.show('main');
     this.chase.snap();
   }
@@ -114,6 +124,7 @@ class App {
     this.clearRun();
     this.menu.show('none');
     this.hud.show(true);
+    this.touch.show(this.touchMode);
     this.vehicle.reset(new THREE.Vector3(0, 0, 0), Math.PI * 0.75);
     this.chase.snap();
     this.hud.toast(this.i18n.t('free.desc'), 3);
@@ -134,6 +145,7 @@ class App {
     this.chase.snap();
     this.menu.show('none');
     this.hud.show(true);
+    this.touch.show(this.touchMode);
     runner.onCountdown = (n) => this.hud.big(n > 0 ? String(n) : this.i18n.t('msg.go'), n > 0 ? 1 : 0.8);
     runner.onCheckpoint = (n, total) => { if (n < total) this.hud.toast(this.i18n.t('msg.checkpoint', { n, total })); };
     runner.onFinish = (r) => { this.hud.big(this.i18n.t('msg.finish'), 1.5); setTimeout(() => this.menu.showFinish(def, r), 1600); };
@@ -199,7 +211,8 @@ class App {
       const on = this.game.time.simElapsed < this.autoDrive.until;
       input.setOverride({ throttle: on ? this.autoDrive.throttle : 0, steer: on ? this.autoDrive.steer : 0, brake: 0, reverse: false, handbrake: false });
     } else if (this.runner && this.runner.state === 'countdown') input.setOverride({ throttle: 0, brake: 1, steer: input.state.steer, reverse: false, handbrake: true });
-    else if (!this.params.has('touch')) input.clearOverride('throttle', 'brake', 'steer', 'reverse', 'handbrake');
+    else if (this.touch.active) this.touch.update(dt);
+    else input.clearOverride('throttle', 'brake', 'steer', 'reverse', 'handbrake');
     this.vehicle.fixedUpdate(dt, input.state);
     this.runner?.update(dt, this.vehicle.position);
   }
