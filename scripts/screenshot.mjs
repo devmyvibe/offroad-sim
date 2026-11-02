@@ -11,7 +11,7 @@ const args = process.argv.slice(2);
 const name = args.find((a) => !a.startsWith('--')) ?? 'shot';
 const mobile = args.includes('--mobile');
 const wait = Number((args.find((a) => a.startsWith('--wait=')) ?? '--wait=4000').split('=')[1]);
-const urlArg = args.find((a) => a.startsWith('--url='))?.split('=')[1];
+const urlArg = args.find((a) => a.startsWith('--url='))?.slice(6);
 const nofog = args.includes('--nofog');
 const cam = args.find((a) => a.startsWith('--cam='))?.split('=')[1];
 const quality = (args.find((a) => a.startsWith('--quality=')) ?? '--quality=low').split('=')[1];

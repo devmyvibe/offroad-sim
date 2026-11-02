@@ -38,11 +38,26 @@ export function buildProps(physics: PhysicsWorld, hm: Heightmap, paths: Map<stri
     rockGeo.computeVertexNormals();
   }
   const rockCount = Math.floor(2600 * density);
-  const rocks = new THREE.InstancedMesh(rockGeo, rockMat, rockCount);
+  const trailRocks = Math.floor(700 * Math.max(0.6, density));
+  const rocks = new THREE.InstancedMesh(rockGeo, rockMat, rockCount + trailRocks);
   rocks.castShadow = true; rocks.receiveShadow = true;
   const m = new THREE.Matrix4(), q = new THREE.Quaternion(), s = new THREE.Vector3(), p = new THREE.Vector3();
   let n = 0, tries = 0;
-  while (n < rockCount && tries < rockCount * 12) {
+  // Dense boulder field along the rock trail's shoulders (and a few small ones on the track itself).
+  if (rockTrail) for (let i = 0; i < trailRocks; i++) {
+    const t = rng.range(60, rockTrail.length);
+    const pt = rockTrail.at(t), tg = rockTrail.tangent(t);
+    const onTrack = rng.float() < 0.12;
+    const lateral = onTrack ? rng.range(-3.5, 3.5) : (rng.float() < 0.5 ? -1 : 1) * rng.range(5.5, 18);
+    const x = pt.x - tg.z * lateral, z = pt.z + tg.x * lateral;
+    const size = onTrack ? rng.range(0.15, 0.3) : rng.range(0.4, 1.6);
+    const y = hm.sample(x, z) - size * 0.35;
+    q.setFromEuler(new THREE.Euler(rng.range(0, 0.6), rng.range(0, Math.PI * 2), rng.range(0, 0.5)));
+    s.set(size * rng.range(0.8, 1.5), size * rng.range(0.6, 1.0), size * rng.range(0.8, 1.5));
+    p.set(x, y, z); m.compose(p, q, s); rocks.setMatrixAt(n++, m);
+    if (size > 0.7) physics.world.createCollider(physics.R.ColliderDesc.ball(size * 0.75).setTranslation(x, y, z).setFriction(1.0));
+  }
+  while (n < rockCount + trailRocks && tries < rockCount * 12) {
     tries++;
     const x = rng.range(-half, half), z = rng.range(-half, half);
     if (Math.hypot(x, z) < 70) continue;
@@ -100,6 +115,5 @@ export function buildProps(physics: PhysicsWorld, hm: Heightmap, paths: Map<stri
   shrubs.count = n;
   shrubs.instanceColor = new THREE.InstancedBufferAttribute(colorAttr, 3);
   group.add(shrubs);
-  void rockTrail;
   return group;
 }

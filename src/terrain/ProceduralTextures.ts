@@ -32,13 +32,13 @@ export class ProceduralTextures {
       const plates = tileFbm(noise, u + 9, v + 4, 3, 2) * 0.5 + 0.5;
       const h = clamp(0.6 * plates + 0.5 * cracks * cracks - 0.1, 0, 1);
       const tint = tileFbm(noise, u + 1, v + 8, 2, 2) * 0.5 + 0.5;
-      return { h, color: lerpColor([0.5, 0.42, 0.33], [0.36, 0.3, 0.25], 0.7 * (1 - h) + 0.3 * tint) };
+      return { h, color: lerpColor([0.56, 0.47, 0.37], [0.38, 0.32, 0.26], 0.7 * (1 - h) + 0.3 * tint) };
     }, 1.6);
     this.gravel = makeSurface(size, anisotropy, (u, v) => {
       const pebbles = tileFbm(noise, u + 3, v + 7, 16, 3) * 0.5 + 0.5;
       const dust = tileFbm(noise, u + 6, v + 1, 4, 2) * 0.5 + 0.5;
       const h = clamp(0.7 * pebbles * pebbles + 0.3 * dust, 0, 1);
-      return { h, color: lerpColor([0.73, 0.6, 0.42], [0.55, 0.45, 0.33], 0.8 * (1 - pebbles)) };
+      return { h, color: lerpColor([0.66, 0.55, 0.4], [0.47, 0.39, 0.3], 0.8 * (1 - pebbles)) };
     }, 1.0);
     this.macro = makeMacro(size, noise);
   }

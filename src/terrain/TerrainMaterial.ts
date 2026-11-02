@@ -41,7 +41,7 @@ export function createTerrainMaterial(tex: ProceduralTextures): THREE.MeshStanda
         gUv2 = vWorldPos.xz * uTexScale * 0.27 + vec2(0.37, 0.11);
         gMacro = texture2D(tMacro, vWorldPos.xz * 0.0035).r;
         float slope = 1.0 - clamp(vWorldNormal.y, 0.0, 1.0);
-        gRockW = smoothstep(0.22, 0.5, slope + 0.14 * (gMacro - 0.5));
+        gRockW = max(smoothstep(0.22, 0.5, slope + 0.14 * (gMacro - 0.5)), 1.0 - smoothstep(0.03, 0.16, vSand));
         gSandW = (1.0 - gRockW) * smoothstep(0.2, 0.8, vSand + 0.2 * (gMacro - 0.5));
         gGravelW = 1.0 - gRockW - gSandW;
         vec3 sandC = mix(texture2D(tSandA, gUv1).rgb, texture2D(tSandA, gUv2).rgb, 0.45);
