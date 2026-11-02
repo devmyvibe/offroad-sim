@@ -145,7 +145,7 @@ export class Vehicle {
     const movingForward = forwardSpeed > 0.5, movingBack = forwardSpeed < -0.5;
     const wantsReverse = input.reverse && !movingForward;
     const throttle = dtr.state.gear < 0 ? (input.reverse ? 1 : 0) : input.throttle;
-    dtr.update(dt, throttle, wantsReverse, forwardSpeed, this.spinEstimate);
+    dtr.update(dt, throttle, wantsReverse, forwardSpeed, this.spinEstimate, input.throttle > 0);
     const driven = this.mode === '2H' ? [2, 3] : [0, 1, 2, 3];
     const forcePerWheel = (dtr.state.wheelTorqueNm / TROOPER.wheelRadius) / driven.length;
 

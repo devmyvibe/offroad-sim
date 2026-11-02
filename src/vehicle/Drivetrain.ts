@@ -41,7 +41,7 @@ export class Drivetrain {
     return c[c.length - 1][1] * Math.max(0, 1 - (rpm - c[c.length - 1][0]) / 600);
   }
 
-  update(dt: number, throttle: number, reverse: boolean, forwardSpeed: number, wheelSpin = 0): void {
+  update(dt: number, throttle: number, reverse: boolean, forwardSpeed: number, wheelSpin = 0, forwardIntent = throttle > 0): void {
     const s = this.state;
     const { idleRpm, redlineRpm } = TROOPER.engine;
     const wheelRadPerS = forwardSpeed / TROOPER.wheelRadius;
@@ -49,7 +49,7 @@ export class Drivetrain {
 
     // Reverse / forward engagement only near standstill.
     if (reverse && s.gear >= 0 && forwardSpeed < 1.0) { s.gear = -1; }
-    else if (!reverse && s.gear < 0 && forwardSpeed > -1.0 && throttle > 0) { s.gear = 1; }
+    else if (!reverse && s.gear < 0 && forwardSpeed > -1.0 && forwardIntent) { s.gear = 1; }
 
     // Automatic shifting with hysteresis; lower points in low range to keep torque.
     if (s.shifting) {
