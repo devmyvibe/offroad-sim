@@ -53,6 +53,8 @@ export class Settings {
       const raw = localStorage.getItem(KEY);
       if (raw) Object.assign(this.data, JSON.parse(raw));
     } catch { /* storage unavailable */ }
+    const q = new URLSearchParams(location.search).get('quality');
+    if (q === 'low' || q === 'medium' || q === 'high') this.data.quality = q;
   }
 
   get preset(): QualityPreset { return PRESETS[this.data.quality]; }

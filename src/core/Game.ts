@@ -37,7 +37,7 @@ export class Game {
     this.renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    this.renderer.toneMappingExposure = 0.85;
+    this.renderer.toneMappingExposure = 0.62;
     this.camera = new THREE.PerspectiveCamera(60, 1, 0.3, 3000);
     this.applyQuality();
     this.settings.onChange(() => this.applyQuality());

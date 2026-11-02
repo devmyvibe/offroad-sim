@@ -1,6 +1,11 @@
 import * as THREE from 'three';
 import { Game } from './core/Game';
 import { FreeCamera } from './camera/FreeCamera';
+import { buildMap } from './world/Map01';
+import { ProceduralTextures } from './terrain/ProceduralTextures';
+import { createTerrainMaterial } from './terrain/TerrainMaterial';
+import { buildTerrainGeometry, createTerrainCollider } from './terrain/TerrainMesh';
+import { DesertSky } from './world/Sky';
 
 declare global {
   interface Window { __game?: Game; __debug?: Record<string, unknown>; }
@@ -11,37 +16,47 @@ async function boot(): Promise<void> {
   const game = new Game(canvas);
   window.__game = game;
   await game.init();
+  const { scene, camera, physics, R, settings } = game;
 
-  const { scene, camera, physics, R } = game;
-  scene.background = new THREE.Color(0xd9c2a0);
-  scene.fog = new THREE.Fog(0xd9c2a0, 200, 900);
+  const t0 = performance.now();
+  const map = buildMap();
+  const tMap = performance.now() - t0;
+  const textures = new ProceduralTextures(256, settings.preset.anisotropy);
+  const tTex = performance.now() - t0 - tMap;
+  const terrain = new THREE.Mesh(buildTerrainGeometry(map.hm, settings.preset.terrainSegments), createTerrainMaterial(textures));
+  terrain.receiveShadow = true; terrain.castShadow = false;
+  scene.add(terrain);
+  createTerrainCollider(physics, map.hm);
+  const tMesh = performance.now() - t0 - tMap - tTex;
 
-  const sun = new THREE.DirectionalLight(0xfff2dc, 3.0);
-  sun.position.set(80, 120, 40);
-  sun.castShadow = true;
-  scene.add(sun, new THREE.HemisphereLight(0xcfe3ff, 0x8a6a3a, 0.8));
+  const sky = new DesertSky(scene, game.renderer);
+  sky.setShadowQuality(settings.preset.shadowMapSize, settings.preset.shadows);
+  sky.setFogFar(settings.preset.fogFar);
 
-  // M0 placeholder world: flat ground + a falling crate to prove physics/render sync.
-  const ground = new THREE.Mesh(new THREE.PlaneGeometry(400, 400), new THREE.MeshStandardMaterial({ color: 0xc8a062, roughness: 1 }));
-  ground.rotation.x = -Math.PI / 2; ground.receiveShadow = true; scene.add(ground);
-  physics.world.createCollider(R.ColliderDesc.cuboid(200, 0.5, 200).setTranslation(0, -0.5, 0));
-
+  // Placeholder dynamic body so physics/render sync stays visible until the car lands in M2.
   const crateMesh = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshStandardMaterial({ color: 0x8b4a2b }));
   crateMesh.castShadow = true; scene.add(crateMesh);
-  const crate = physics.world.createRigidBody(R.RigidBodyDesc.dynamic().setTranslation(0, 6, 0).setRotation({ x: 0.2, y: 0.1, z: 0.3, w: 0.92 }));
-  physics.world.createCollider(R.ColliderDesc.cuboid(0.5, 0.5, 0.5).setRestitution(0.2), crate);
+  const crate = physics.world.createRigidBody(R.RigidBodyDesc.dynamic().setTranslation(0, map.hubHeight + 4, 0));
+  physics.world.createCollider(R.ColliderDesc.cuboid(0.5, 0.5, 0.5), crate);
 
-  camera.position.set(8, 5, 10);
+  camera.position.set(-14, map.hubHeight + 6, 18);
   const free = new FreeCamera(camera, canvas);
-  free.yaw = Math.atan2(8, 10); free.pitch = -0.35; free.setActive(true);
+  free.yaw = Math.atan2(-14, 18) + Math.PI; free.pitch = -0.22; free.setActive(true);
+  const camParam = new URLSearchParams(location.search).get('cam');
+  if (camParam) { const [x, y, z, yaw, pitch] = camParam.split(',').map(Number); camera.position.set(x, y, z); free.yaw = yaw; free.pitch = pitch; }
+
+  // Verify physics/visual agreement of the heightfield (after the first step, when queries are live).
+  const checkPts = [[0, 0], [120, -90], [-300, 200], [600, -600], [-700, -400]];
+  let check: unknown = null;
 
   game.add({
     update(dt) {
       free.update(dt);
       const p = crate.translation(), q = crate.rotation();
-      crateMesh.position.set(p.x, p.y, p.z);
-      crateMesh.quaternion.set(q.x, q.y, q.z, q.w);
-      window.__debug = { crateY: p.y, fps: game.stats.fps, steps: game.stats.physicsSteps };
+      crateMesh.position.set(p.x, p.y, p.z); crateMesh.quaternion.set(q.x, q.y, q.z, q.w);
+      sky.follow(crateMesh.position);
+      if (!check && game.stats.physicsSteps > 0) check = checkPts.map(([x, z]) => { const phys = physics.groundHeight(x, z); const vis = map.hm.sample(x, z); return { x, z, phys: phys === null ? null : +phys.toFixed(2), vis: +vis.toFixed(2) }; });
+      window.__debug = { crateY: +p.y.toFixed(2), hub: +map.hubHeight.toFixed(2), fps: game.stats.fps, timings: { map: Math.round(tMap), tex: Math.round(tTex), mesh: Math.round(tMesh) }, check };
     },
   });
   game.start();
