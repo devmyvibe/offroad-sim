@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import type { Heightmap, Polyline } from '../terrain/Heightmap';
+import type { TerrainQuery, Polyline } from '../terrain/Heightmap';
 import type { Checkpoint } from './TrailRunner';
 
 /** Trail stakes along a path and checkpoint gates (two poles + banner). */
@@ -9,7 +9,7 @@ export class TrailMarkers {
   private gateMats: THREE.MeshStandardMaterial[] = [];
   private t = 0;
 
-  constructor(hm: Heightmap, path: Polyline, checkpoints: Checkpoint[], color: number) {
+  constructor(hm: TerrainQuery, path: Polyline, checkpoints: Checkpoint[], color: number) {
     // Stakes every 30 m, offset to the right of the trail.
     const count = Math.floor(path.length / 30);
     const stake = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.05, 0.07, 1.4, 6), new THREE.MeshStandardMaterial({ color: 0xe8e2d2, roughness: 0.8 }), count);

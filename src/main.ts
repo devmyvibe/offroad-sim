@@ -10,6 +10,9 @@ import { DesertSky } from './world/Sky';
 import { Vehicle } from './vehicle/Vehicle';
 import { buildObstacles } from './world/Obstacles';
 import { buildProps } from './world/Props';
+import { RockField, createRockMaterial } from './world/Rocks';
+import { placeTechnicalRocks, gardenLine, TECH } from './world/TechnicalTrail';
+import { Rng } from './core/Random';
 import { Dust } from './world/Dust';
 import { VehicleAudio } from './vehicle/VehicleAudio';
 import { I18n, formatTime } from './ui/i18n';
@@ -65,13 +68,24 @@ class App {
     this.map = buildMap();
     window.__map = this.map;
     const textures = new ProceduralTextures(256, settings.preset.anisotropy);
-    const terrain = new THREE.Mesh(buildTerrainGeometry(this.map.hm, settings.preset.terrainSegments), createTerrainMaterial(textures));
+    const terrainMat = createTerrainMaterial(textures);
+    const terrain = new THREE.Mesh(buildTerrainGeometry(this.map.hm, settings.preset.terrainSegments), terrainMat);
     terrain.receiveShadow = true;
     scene.add(terrain);
     createTerrainCollider(physics, this.map.hm);
-    const rockMat = new THREE.MeshStandardMaterial({ map: textures.rock.albedo, normalMap: textures.rock.normal, roughness: 0.85, color: 0xb9a58a });
-    scene.add(buildObstacles(physics, this.map.hm, this.map.paths, rockMat));
-    scene.add(buildProps(physics, this.map.hm, this.map.paths, rockMat, settings.preset.props));
+    // Detail patch: full 1 m mesh on high, 2 m on medium/low.
+    const patchSegments = settings.data.quality === 'high' ? this.map.patch.n : this.map.patch.n / 2;
+    const patchMesh = new THREE.Mesh(buildTerrainGeometry(this.map.patch, patchSegments), terrainMat);
+    patchMesh.receiveShadow = true;
+    scene.add(patchMesh);
+    createTerrainCollider(physics, this.map.patch);
+    const rockMat = createRockMaterial(textures);
+    scene.add(buildObstacles(physics, this.map.terrain, this.map.paths, rockMat));
+    scene.add(buildProps(physics, this.map.hm, this.map.terrain, this.map.patch, this.map.paths, rockMat, settings.preset.props));
+    const rocks = new RockField(physics, rockMat, 600);
+    placeTechnicalRocks(rocks, this.map.patch, this.map.paths.get('technical')!, new Rng(77));
+    rocks.finalize();
+    scene.add(rocks.group);
     this.dust = new Dust(settings.preset.dust ? 600 : 120);
     scene.add(this.dust.points);
     this.audio = new VehicleAudio();
@@ -83,11 +97,11 @@ class App {
     this.sky.setFogFar(settings.preset.fogFar);
     settings.onChange(() => { this.sky.setShadowQuality(settings.preset.shadowMapSize, settings.preset.shadows); this.sky.setFogFar(settings.preset.fogFar); });
 
-    this.vehicle = new Vehicle(physics, this.map.hm, scene, new THREE.Vector3(0, this.map.hm.sample(0, 0) + 1.1, 0), Math.PI * 0.75);
+    this.vehicle = new Vehicle(physics, this.map.terrain, scene, new THREE.Vector3(0, this.map.hm.sample(0, 0) + 1.1, 0), Math.PI * 0.75);
     window.__vehicle = this.vehicle;
     this.vehicle.onMessage((k) => this.hud.toast(this.i18n.t(k)));
 
-    this.chase = new ChaseCamera(camera, this.map.hm);
+    this.chase = new ChaseCamera(camera, this.map.terrain);
     this.free = new FreeCamera(camera, game.canvas);
     window.__free = this.free;
     if (this.params.has('orbit')) this.chase.orbitLock = Number(this.params.get('orbit'));
@@ -148,7 +162,7 @@ class App {
     const path = this.map.paths.get(def.id)!;
     const runner = new TrailRunner(def, path, this.game.save);
     this.runner = runner;
-    this.markers = new TrailMarkers(this.map.hm, path, runner.checkpoints, def.difficulty === 1 ? 0x7fd36b : def.difficulty === 2 ? 0xff9d2e : 0xff5c5c);
+    this.markers = new TrailMarkers(this.map.terrain, path, runner.checkpoints, def.difficulty === 1 ? 0x7fd36b : def.difficulty === 2 ? 0xff9d2e : 0xff5c5c);
     this.game.scene.add(this.markers.group);
     const start = runner.startPose();
     this.vehicle.reset(new THREE.Vector3(start.x, 0, start.z), start.heading);
@@ -332,7 +346,10 @@ class App {
     if (this.runner && this.runner.state === 'countdown') { input.setOverride({ throttle: 0, brake: 1, steer: 0, reverse: false, handbrake: true }); return; }
     const near = ap.path.nearest(v.position.x, v.position.z);
     ap.t = near.t;
-    const look = ap.path.at(Math.min(ap.path.length, near.t + 7 + v.telemetry.speedKmh * 0.25));
+    const lt = Math.min(ap.path.length, near.t + 5 + v.telemetry.speedKmh * 0.25);
+    const look = ap.path.at(lt);
+    // On the technical trail, follow the clear line through the rock garden like a driver would.
+    if (this.runner?.def.id === 'technical' && lt > TECH.garden[0] - 10 && lt < TECH.garden[1] + 10) { const tg = ap.path.tangent(lt); const lat = gardenLine(lt); look.x -= tg.z * lat; look.z += tg.x * lat; }
     const dx = look.x - v.position.x, dz = look.z - v.position.z;
     const want = Math.atan2(dx, dz), have = Math.atan2(v.forward.x, v.forward.z);
     let err = want - have; while (err > Math.PI) err -= 2 * Math.PI; while (err < -Math.PI) err += 2 * Math.PI;

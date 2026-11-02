@@ -8,7 +8,7 @@ export const TROOPER = {
   bodyHalf: { x: 0.86, y: 0.42, z: 2.25 },
   /** heavy low block (engine, axles, fuel) that pulls the centre of mass down */
   lowMassHalf: { x: 0.55, y: 0.12, z: 1.4 },
-  lowMassY: -0.3,
+  lowMassY: -0.2,
   lowMassFraction: 0.42,
   wheelbase: 2.76,
   track: 1.5,

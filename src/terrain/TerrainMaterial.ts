@@ -21,11 +21,14 @@ export function createTerrainMaterial(tex: ProceduralTextures): THREE.MeshStanda
     shader.vertexShader = shader.vertexShader
       .replace('#include <common>', `#include <common>
         attribute float aSand;
+        attribute float aAO;
         varying float vSand;
+        varying float vAO;
         varying vec3 vWorldPos;
         varying vec3 vWorldNormal;`)
       .replace('#include <fog_vertex>', `#include <fog_vertex>
         vSand = aSand;
+        vAO = aAO;
         vWorldPos = (modelMatrix * vec4(transformed, 1.0)).xyz;
         vWorldNormal = normalize(mat3(modelMatrix) * objectNormal);`);
     shader.fragmentShader = shader.fragmentShader
@@ -33,6 +36,7 @@ export function createTerrainMaterial(tex: ProceduralTextures): THREE.MeshStanda
         uniform sampler2D tSandA, tSandN, tRockA, tRockN, tGravelA, tGravelN, tMacro;
         uniform float uTexScale, uNormalStrength;
         varying float vSand;
+        varying float vAO;
         varying vec3 vWorldPos;
         varying vec3 vWorldNormal;
         float gSandW, gRockW, gGravelW; vec2 gUv1, gUv2; float gMacro;`)
@@ -48,7 +52,7 @@ export function createTerrainMaterial(tex: ProceduralTextures): THREE.MeshStanda
         vec3 rockC = mix(texture2D(tRockA, gUv1).rgb, texture2D(tRockA, gUv2).rgb, 0.5);
         vec3 gravelC = mix(texture2D(tGravelA, gUv1).rgb, texture2D(tGravelA, gUv2).rgb, 0.45);
         vec3 albedo = sandC * gSandW + rockC * gRockW + gravelC * gGravelW;
-        albedo *= 0.82 + 0.36 * gMacro;
+        albedo *= (0.82 + 0.36 * gMacro) * vAO;
         diffuseColor.rgb *= albedo;`)
       .replace('#include <roughnessmap_fragment>', `#include <roughnessmap_fragment>
         roughnessFactor = mix(0.97, 0.78, gRockW);`)
@@ -63,7 +67,7 @@ export function createTerrainMaterial(tex: ProceduralTextures): THREE.MeshStanda
           normal = normalize(mat3(viewMatrix) * nW);
         }`);
   };
-  mat.customProgramCacheKey = () => 'terrain-splat-v1';
+  mat.customProgramCacheKey = () => 'terrain-splat-v2';
   (mat as THREE.MeshStandardMaterial & { splatUniforms: typeof uniforms }).splatUniforms = uniforms;
   return mat;
 }

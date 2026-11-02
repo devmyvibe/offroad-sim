@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import type { Heightmap } from '../terrain/Heightmap';
+import type { TerrainQuery } from '../terrain/Heightmap';
 
 /** Spring-damped third-person camera that stays above the terrain. */
 export class ChaseCamera {
@@ -17,7 +17,7 @@ export class ChaseCamera {
   /** when set, the orbit holds this angle instead of decaying (debug views) */
   orbitLock: number | null = null;
 
-  constructor(private camera: THREE.PerspectiveCamera, private hm: Heightmap) {}
+  constructor(private camera: THREE.PerspectiveCamera, private hm: TerrainQuery) {}
 
   snap(): void { this.initialized = false; }
 

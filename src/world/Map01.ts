@@ -1,6 +1,8 @@
-import { Heightmap, Polyline, smoothPath } from '../terrain/Heightmap';
+import { Heightmap, CompositeTerrain, Polyline, smoothPath } from '../terrain/Heightmap';
+import { createDetailPatch, sinkBaseUnderPatch } from '../terrain/DetailPatch';
+import { stampRidge, stampTechnicalTrail } from './TechnicalTrail';
 import { Noise, smoothstep } from '../terrain/Noise';
-import { stampWadi, stampCrossings, stampRockSteps, stampDirtRoad } from '../terrain/Stamps';
+import { stampWadi, stampCrossings, stampDirtRoad } from '../terrain/Stamps';
 import { TRAILS, type TrailDef } from '../trails/trails';
 
 export const MAP_SEED = 20261102;
@@ -9,9 +11,14 @@ export const MAP_CELLS = 512;      // heightfield subdivisions per side (4 m cel
 
 export interface BuiltMap {
   hm: Heightmap;
+  /** 1 m detail patch holding the technical trail */
+  patch: Heightmap;
+  terrain: CompositeTerrain;
   paths: Map<string, Polyline>;
   hubHeight: number;
 }
+
+export const PATCH = { cx: 420, cz: -380, size: 640, cell: 1 };
 
 /**
  * Deterministic desert: rolling dune country in the south, broken hills in the
@@ -24,7 +31,7 @@ export function buildMap(): BuiltMap {
   const detail = new Noise(MAP_SEED + 7);
 
   // Massif centre (NE) and dune basin centre (S).
-  const massif = { x: 620, z: -620, r: 520 };
+  const massif = { x: 840, z: -840, r: 560 };
   const basin = { x: 60, z: 620, r: 560 };
 
   const n1 = hm.n + 1;
@@ -34,7 +41,9 @@ export function buildMap(): BuiltMap {
       const x = hm.worldX(j);
       const dm = Math.hypot(x - massif.x, z - massif.z);
       const db = Math.hypot(x - basin.x, z - basin.z);
-      const massifW = 1 - smoothstep(massif.r * 0.35, massif.r, dm);
+      // Keep the big massif out of the technical-trail patch so its climb is the designed ridge only.
+      const inPatch = (1 - smoothstep(PATCH.size / 2 - 10, PATCH.size / 2 + 160, Math.abs(x - PATCH.cx))) * (1 - smoothstep(PATCH.size / 2 - 10, PATCH.size / 2 + 160, Math.abs(z - PATCH.cz)));
+      const massifW = (1 - smoothstep(massif.r * 0.35, massif.r, dm)) * (1 - 0.85 * inPatch);
       const basinW = 1 - smoothstep(basin.r * 0.4, basin.r, db);
 
       // Base rolling ground.
@@ -64,28 +73,33 @@ export function buildMap(): BuiltMap {
   const hubHeight = hm.sample(0, 0);
   hm.flatten(0, 0, 55, hubHeight, 40, 0.3);
 
-  // Carve trails.
+  // Carve the base-resolution trails and the access roads from the hub.
   const paths = new Map<string, Polyline>();
   for (const t of TRAILS) {
-    const p = new Polyline(smoothPath(t.ctrl, 4));
+    const p = new Polyline(smoothPath(t.ctrl, t.kind === 'technical' ? 2 : 4));
     paths.set(t.id, p);
-    carve(hm, noise, t, p);
+    if (t.kind !== 'technical') carve(hm, noise, t, p);
   }
-  // Short access roads from the hub to each trail start.
   for (const t of TRAILS) {
     const s = t.ctrl[0];
     stampDirtRoad(hm, new Polyline([{ x: 0, z: 0 }, { x: s.x * 0.5, z: s.z * 0.5 }, s]), 4);
   }
-  // Re-flatten the hub centre after roads so the car never spawns on a seam.
   hm.flatten(0, 0, 18, hubHeight, 20, 0.3);
 
-  return { hm, paths, hubHeight };
+  // High-resolution patch for the technical trail: built from the base, then shaped.
+  const patch = createDetailPatch(hm, PATCH.cx, PATCH.cz, PATCH.size, PATCH.cell, new Noise(MAP_SEED + 11));
+  const tech = paths.get('technical')!;
+  stampRidge(patch, tech);
+  stampTechnicalTrail(patch, tech, new Noise(MAP_SEED + 12));
+  sinkBaseUnderPatch(hm, patch);
+
+  return { hm, patch, terrain: new CompositeTerrain(hm, patch), paths, hubHeight };
 }
 
 function carve(hm: Heightmap, noise: Noise, t: TrailDef, p: Polyline): void {
   switch (t.kind) {
     case 'wadi': stampWadi(hm, p, noise); break;
     case 'crossings': stampCrossings(hm, p, noise); break;
-    case 'rocksteps': stampRockSteps(hm, p, noise, t.steps ?? []); break;
+    case 'technical': break;
   }
 }

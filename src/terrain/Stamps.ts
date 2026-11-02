@@ -16,8 +16,8 @@ export interface TrailStampBase {
   edge: number;
   /** moving-average window (m) applied to the centreline height */
   smooth: number;
-  /** sand weight written inside the trail (0 rock .. 1 sand) */
-  sand: number;
+  /** sand weight written inside the trail (0 rock .. 1 sand), constant or per arc length */
+  sand: number | ((t: number) => number);
 }
 
 function buildProfile(hm: Heightmap, path: Polyline, smooth: number, step = 2): Float32Array {
@@ -63,7 +63,7 @@ export function stampTrail(
     const k = hm.idx(i, j);
     const target = profileAt(prof, t) + along(t) + shape({ t, d, side, x, z });
     hm.heights[k] = lerp(hm.heights[k], target, w);
-    hm.sand[k] = lerp(hm.sand[k], s.sand, w);
+    hm.sand[k] = lerp(hm.sand[k], typeof s.sand === 'function' ? s.sand(t) : s.sand, w);
   });
 }
 

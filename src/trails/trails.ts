@@ -1,6 +1,6 @@
 import type { Vec2 } from '../terrain/Heightmap';
 
-export type TrailKind = 'wadi' | 'crossings' | 'rocksteps';
+export type TrailKind = 'wadi' | 'crossings' | 'technical';
 
 export interface TrailDef {
   id: string;
@@ -44,20 +44,16 @@ export const TRAILS: TrailDef[] = [
     ],
   },
   {
-    id: 'rocksteps',
-    kind: 'rocksteps',
+    id: 'technical',
+    kind: 'technical',
     difficulty: 3,
     recommended: '4L',
-    checkpointEvery: 160,
-    starTimes: [300_000, 450_000],
+    checkpointEvery: 150,
+    starTimes: [360_000, 540_000],
     ctrl: [
-      { x: 40, z: -20 }, { x: 160, z: -120 }, { x: 290, z: -230 }, { x: 400, z: -330 },
-      { x: 470, z: -430 }, { x: 540, z: -520 }, { x: 600, z: -610 }, { x: 640, z: -700 },
-    ],
-    steps: [
-      { t: 180, h: 0.3 }, { t: 240, h: 0.35 }, { t: 320, h: 0.4 }, { t: 380, h: 0.35 },
-      { t: 470, h: 0.45 }, { t: 520, h: 0.4 }, { t: 600, h: 0.5 }, { t: 650, h: 0.4 },
-      { t: 740, h: 0.5 }, { t: 800, h: 0.45 }, { t: 870, h: 0.55 },
+      { x: 150, z: -110 }, { x: 205, z: -150 }, { x: 265, z: -170 }, { x: 325, z: -205 }, { x: 385, z: -250 },
+      { x: 430, z: -300 }, { x: 465, z: -350 }, { x: 495, z: -400 }, { x: 530, z: -450 }, { x: 560, z: -500 },
+      { x: 590, z: -545 }, { x: 615, z: -590 }, { x: 640, z: -625 },
     ],
   },
 ];

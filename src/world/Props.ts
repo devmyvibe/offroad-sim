@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import type { Heightmap, Polyline } from '../terrain/Heightmap';
+import type { Heightmap, Polyline, TerrainQuery } from '../terrain/Heightmap';
 import type { PhysicsWorld } from '../physics/World';
 import { Rng } from '../core/Random';
 import { Noise, smoothstep } from '../terrain/Noise';
@@ -9,13 +9,14 @@ import { Noise, smoothstep } from '../terrain/Noise';
  * the massif, shrubs prefer sandy lows; nothing spawns on the trails or hub.
  * Larger rocks get sphere colliders so they are real obstacles.
  */
-export function buildProps(physics: PhysicsWorld, hm: Heightmap, paths: Map<string, Polyline>, rockMat: THREE.Material, density: number): THREE.Group {
+export function buildProps(physics: PhysicsWorld, base: Heightmap, hm: TerrainQuery, exclude: Heightmap | null, paths: Map<string, Polyline>, rockMat: THREE.Material, density: number): THREE.Group {
   const group = new THREE.Group();
   const rng = new Rng(4242);
   const noise = new Noise(55);
-  const half = hm.size / 2 - 20;
+  const half = base.size / 2 - 20;
+  const inPatch = (x: number, z: number): boolean => !!exclude && exclude.contains(x, z, -5);
   const trailList = Array.from(paths.entries());
-  const rockTrail = paths.get('rocksteps');
+  const rockTrail = paths.get('technical');
 
   const nearTrail = (x: number, z: number): { d: number; rocky: boolean } => {
     let best = Infinity, rocky = false;
@@ -24,7 +25,7 @@ export function buildProps(physics: PhysicsWorld, hm: Heightmap, paths: Map<stri
       const b = p.bounds(30);
       if (x < b.minX || x > b.maxX || z < b.minZ || z > b.maxZ) continue;
       const n = p.nearest(x, z);
-      if (n.d < best) { best = n.d; rocky = id === 'rocksteps'; }
+      if (n.d < best) { best = n.d; rocky = id === 'technical'; }
     }
     return { d: best, rocky };
   };
@@ -38,13 +39,13 @@ export function buildProps(physics: PhysicsWorld, hm: Heightmap, paths: Map<stri
     rockGeo.computeVertexNormals();
   }
   const rockCount = Math.floor(2600 * density);
-  const trailRocks = Math.floor(700 * Math.max(0.6, density));
+  const trailRocks = 0;
   const rocks = new THREE.InstancedMesh(rockGeo, rockMat, rockCount + trailRocks);
   rocks.castShadow = true; rocks.receiveShadow = true;
   const m = new THREE.Matrix4(), q = new THREE.Quaternion(), s = new THREE.Vector3(), p = new THREE.Vector3();
   let n = 0, tries = 0;
   // Dense boulder field along the rock trail's shoulders (and a few small ones on the track itself).
-  if (rockTrail) for (let i = 0; i < trailRocks; i++) {
+  if (rockTrail && trailRocks > 0) for (let i = 0; i < trailRocks; i++) {
     const t = rng.range(60, rockTrail.length);
     const pt = rockTrail.at(t), tg = rockTrail.tangent(t);
     const onTrack = rng.float() < 0.12;
@@ -60,7 +61,7 @@ export function buildProps(physics: PhysicsWorld, hm: Heightmap, paths: Map<stri
   while (n < rockCount + trailRocks && tries < rockCount * 12) {
     tries++;
     const x = rng.range(-half, half), z = rng.range(-half, half);
-    if (Math.hypot(x, z) < 70) continue;
+    if (Math.hypot(x, z) < 70 || inPatch(x, z)) continue;
     const sand = hm.sampleSand(x, z);
     const nt = nearTrail(x, z);
     // Rocky ground and the rock trail's shoulders get far more rocks.

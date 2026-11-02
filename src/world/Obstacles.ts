@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import type { PhysicsWorld } from '../physics/World';
-import type { Heightmap, Polyline } from '../terrain/Heightmap';
+import type { TerrainQuery, Polyline } from '../terrain/Heightmap';
 import { Noise } from '../terrain/Noise';
 import { Rng } from '../core/Random';
 import { TRAILS, type TrailDef } from '../trails/trails';
@@ -10,20 +10,19 @@ import { TRAILS, type TrailDef } from '../trails/trails';
  * climb and half-buried rock humps (axle twisters) on the crossings trail.
  * Each gets a physics collider and a mesh sharing one rock material.
  */
-export function buildObstacles(physics: PhysicsWorld, hm: Heightmap, paths: Map<string, Polyline>, rockMaterial: THREE.Material): THREE.Group {
+export function buildObstacles(physics: PhysicsWorld, hm: TerrainQuery, paths: Map<string, Polyline>, rockMaterial: THREE.Material): THREE.Group {
   const group = new THREE.Group();
   const rng = new Rng(777);
   const noise = new Noise(31);
   for (const t of TRAILS) {
     const path = paths.get(t.id)!;
-    if (t.kind === 'rocksteps') for (const s of t.steps ?? []) addLedge(physics, hm, path, s.t, s.h, group, rockMaterial, rng);
     if (t.kind === 'crossings') addHumps(physics, hm, path, t, group, rockMaterial, rng, noise);
   }
   return group;
 }
 
-/** A rock shelf across the trail: flat top at the upper level, steep front face. */
-function addLedge(physics: PhysicsWorld, hm: Heightmap, path: Polyline, t: number, h: number, group: THREE.Group, mat: THREE.Material, rng: Rng): void {
+/** A rock shelf across the trail: flat top at the upper level, steep front face. (Unused since the technical trail; kept for other maps.) */
+export function addLedge(physics: PhysicsWorld, hm: TerrainQuery, path: Polyline, t: number, h: number, group: THREE.Group, mat: THREE.Material, rng: Rng): void {
   const { R, world } = physics;
   const p = path.at(t), tg = path.tangent(t);
   const yaw = Math.atan2(tg.x, tg.z);
@@ -87,7 +86,7 @@ function prismGeometry(pts: [number, number][], width: number): THREE.BufferGeom
 }
 
 /** Half-buried rock humps alternating left/right so one wheel lifts at a time. */
-function addHumps(physics: PhysicsWorld, hm: Heightmap, path: Polyline, def: TrailDef, group: THREE.Group, mat: THREE.Material, rng: Rng, noise: Noise): void {
+function addHumps(physics: PhysicsWorld, hm: TerrainQuery, path: Polyline, def: TrailDef, group: THREE.Group, mat: THREE.Material, rng: Rng, noise: Noise): void {
   const { R, world } = physics;
   const geo = new THREE.CapsuleGeometry(1, 1, 6, 14);
   const count = Math.floor((path.length - 140) / 9);

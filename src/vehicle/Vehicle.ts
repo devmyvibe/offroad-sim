@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import type RAPIER from '@dimforge/rapier3d-compat';
 import type { PhysicsWorld } from '../physics/World';
-import type { Heightmap } from '../terrain/Heightmap';
+import type { TerrainQuery } from '../terrain/Heightmap';
 import type { InputState } from '../core/Input';
 import { TROOPER, type DriveMode } from './TrooperSpec';
 import { Drivetrain } from './Drivetrain';
@@ -52,7 +52,7 @@ export class Vehicle {
   private readonly wheelLocal: THREE.Vector3[] = [];
   private spinEstimate = 0;
 
-  constructor(physics: PhysicsWorld, private hm: Heightmap, scene: THREE.Scene, spawn: THREE.Vector3, headingRad = 0) {
+  constructor(physics: PhysicsWorld, private hm: TerrainQuery, scene: THREE.Scene, spawn: THREE.Vector3, headingRad = 0) {
     const { R, world } = physics;
     const q = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), headingRad);
     this.body = world.createRigidBody(

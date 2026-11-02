@@ -2,36 +2,60 @@ import { clamp, lerp, smoothstep } from './Noise';
 
 export interface Vec2 { x: number; z: number; }
 
+/** Anything that can answer "how high / how sandy / which way is up" at a world (x, z). */
+export interface TerrainQuery {
+  sample(x: number, z: number): number;
+  sampleSand(x: number, z: number): number;
+  normal(x: number, z: number, out?: { x: number; y: number; z: number }): { x: number; y: number; z: number };
+}
+
+/** Base heightmap plus an optional high-resolution patch that wins inside its area. */
+export class CompositeTerrain implements TerrainQuery {
+  constructor(readonly base: Heightmap, readonly patch: Heightmap | null = null) {}
+  private pick(x: number, z: number): Heightmap { return this.patch && this.patch.contains(x, z) ? this.patch : this.base; }
+  sample(x: number, z: number): number { return this.pick(x, z).sample(x, z); }
+  sampleSand(x: number, z: number): number { return this.pick(x, z).sampleSand(x, z); }
+  normal(x: number, z: number, out?: { x: number; y: number; z: number }): { x: number; y: number; z: number } { return this.pick(x, z).normal(x, z, out); }
+}
+
 /**
  * Square heightmap with (n+1)^2 samples over a world extent of `size` metres,
  * centred at the origin. Index (i, j): i ↔ z row, j ↔ x column.
  * `sand` is a per-sample surface weight: 1 = loose sand, 0 = hard rock.
  */
-export class Heightmap {
+export class Heightmap implements TerrainQuery {
   readonly n: number;
   readonly size: number;
   readonly cell: number;
   readonly heights: Float32Array;
   readonly sand: Float32Array;
   private readonly half: number;
+  /** world-space centre of the grid */
+  readonly cx: number;
+  readonly cz: number;
 
-  constructor(n: number, size: number) {
-    this.n = n; this.size = size; this.cell = size / n; this.half = size / 2;
+  constructor(n: number, size: number, cx = 0, cz = 0) {
+    this.n = n; this.size = size; this.cell = size / n; this.half = size / 2; this.cx = cx; this.cz = cz;
     this.heights = new Float32Array((n + 1) * (n + 1));
     this.sand = new Float32Array((n + 1) * (n + 1));
   }
 
   idx(i: number, j: number): number { return i * (this.n + 1) + j; }
-  worldX(j: number): number { return j * this.cell - this.half; }
-  worldZ(i: number): number { return i * this.cell - this.half; }
+  worldX(j: number): number { return this.cx + j * this.cell - this.half; }
+  worldZ(i: number): number { return this.cz + i * this.cell - this.half; }
+  get minX(): number { return this.cx - this.half; }
+  get maxX(): number { return this.cx + this.half; }
+  get minZ(): number { return this.cz - this.half; }
+  get maxZ(): number { return this.cz + this.half; }
+  contains(x: number, z: number, margin = 0): boolean { return x >= this.minX + margin && x <= this.maxX - margin && z >= this.minZ + margin && z <= this.maxZ - margin; }
 
   /** Bilinear height at world (x, z). Clamped at the borders. */
   sample(x: number, z: number): number { return this.bilinear(this.heights, x, z); }
   sampleSand(x: number, z: number): number { return this.bilinear(this.sand, x, z); }
 
   private bilinear(arr: Float32Array, x: number, z: number): number {
-    const fx = clamp((x + this.half) / this.cell, 0, this.n - 1e-6);
-    const fz = clamp((z + this.half) / this.cell, 0, this.n - 1e-6);
+    const fx = clamp((x - this.cx + this.half) / this.cell, 0, this.n - 1e-6);
+    const fz = clamp((z - this.cz + this.half) / this.cell, 0, this.n - 1e-6);
     const j = Math.floor(fx), i = Math.floor(fz);
     const tx = fx - j, tz = fz - i;
     const a = arr[this.idx(i, j)], b = arr[this.idx(i, j + 1)];
@@ -61,10 +85,10 @@ export class Heightmap {
 
   /** Apply fn(x, z, h, sand) → [h, sand] to every sample inside a world-space box. */
   forEachInBox(minX: number, minZ: number, maxX: number, maxZ: number, fn: (x: number, z: number, i: number, j: number) => void): void {
-    const j0 = clamp(Math.floor((minX + this.half) / this.cell), 0, this.n);
-    const j1 = clamp(Math.ceil((maxX + this.half) / this.cell), 0, this.n);
-    const i0 = clamp(Math.floor((minZ + this.half) / this.cell), 0, this.n);
-    const i1 = clamp(Math.ceil((maxZ + this.half) / this.cell), 0, this.n);
+    const j0 = clamp(Math.floor((minX - this.cx + this.half) / this.cell), 0, this.n);
+    const j1 = clamp(Math.ceil((maxX - this.cx + this.half) / this.cell), 0, this.n);
+    const i0 = clamp(Math.floor((minZ - this.cz + this.half) / this.cell), 0, this.n);
+    const i1 = clamp(Math.ceil((maxZ - this.cz + this.half) / this.cell), 0, this.n);
     for (let i = i0; i <= i1; i++) for (let j = j0; j <= j1; j++) fn(this.worldX(j), this.worldZ(i), i, j);
   }
 
