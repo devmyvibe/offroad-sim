@@ -80,17 +80,10 @@ export function stampWadi(hm: Heightmap, path: Polyline, noise: Noise, width = 1
 /** Narrow track with alternating diagonal humps (axle twisters) and some side-slope. */
 export function stampCrossings(hm: Heightmap, path: Polyline, noise: Noise, width = 4.5): void {
   stampTrail(hm, { path, width, edge: 5, smooth: 30, sand: 0.25 }, (c) => {
-    // Alternate humps left/right along the trail. Period ~9m, amplitude up to 0.55m.
-    const phase = (c.t / 9) * Math.PI * 2;
-    const intensity = smoothstep(120, 220, c.t) * (1 - smoothstep(0.9, 1.0, 0)); // ramp in after 120m
-    const left = Math.max(0, Math.sin(phase)) * (c.side > 0 ? 1 : 0);
-    const right = Math.max(0, -Math.sin(phase)) * (c.side < 0 ? 1 : 0);
-    const lateral = smoothstep(0.4, 2.2, c.d); // hump sits on the wheel track, not the centre
-    const hump = 0.55 * intensity * (left + right) * lateral;
-    // Camber: the track leans sideways in places so the player feels roll.
+    // Camber: the track leans sideways in places so the player feels roll. Humps are physical obstacles (see Obstacles.ts).
     const camber = 0.10 * Math.sin(c.t / 70) * c.side * c.d * smoothstep(80, 160, c.t);
     const rough = 0.06 * noise.fbm(c.x * 0.4, c.z * 0.4, 2);
-    return hump + camber + rough;
+    return camber + rough;
   });
 }
 

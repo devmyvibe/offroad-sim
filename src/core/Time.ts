@@ -5,10 +5,13 @@ export class Time {
   private acc = 0;
   /** Wall-clock seconds elapsed since start (unscaled). */
   elapsed = 0;
+  /** Simulated seconds (sum of fixed steps actually run). */
+  simElapsed = 0;
   /** Interpolation factor between the last two physics steps (0..1). */
   alpha = 0;
   frameDt = 0;
-  private readonly maxSteps = 4;
+  /** Max physics steps per frame; tests raise it so the sim keeps real-time pace without a GPU. */
+  maxSteps = 4;
 
   constructor(fixedHz = 60) {
     this.fixedDt = 1 / fixedHz;
@@ -30,6 +33,7 @@ export class Time {
     while (this.acc >= this.fixedDt && steps < this.maxSteps) {
       this.acc -= this.fixedDt;
       steps++;
+      this.simElapsed += this.fixedDt;
     }
     if (steps === this.maxSteps) this.acc = 0;
     this.alpha = this.acc / this.fixedDt;

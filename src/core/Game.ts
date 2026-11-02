@@ -39,6 +39,7 @@ export class Game {
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
     this.renderer.toneMappingExposure = 0.62;
     this.camera = new THREE.PerspectiveCamera(60, 1, 0.3, 3000);
+    if (new URLSearchParams(location.search).has('fastsim')) this.time.maxSteps = 30;
     this.applyQuality();
     this.settings.onChange(() => this.applyQuality());
     window.addEventListener('resize', () => this.resize());
@@ -73,10 +74,26 @@ export class Game {
     this.systems = this.systems.filter((s) => s !== system);
   }
 
+  /** Test mode: physics paced by the wall clock on a timer, rendering only occasionally. */
+  readonly headless = new URLSearchParams(location.search).has('headless');
+
   start(): void {
     if (this.running) return;
     this.running = true;
     this.time.start(performance.now());
+    if (this.headless) {
+      this.time.maxSteps = 120;
+      let lastRender = 0;
+      const tick = () => {
+        if (!this.running) return;
+        const now = performance.now();
+        this.frame(now, now - lastRender > 1000);
+        if (now - lastRender > 1000) lastRender = now;
+        setTimeout(tick, 5);
+      };
+      tick();
+      return;
+    }
     const loop = (now: number) => {
       if (!this.running) return;
       this.frame(now);
@@ -85,7 +102,7 @@ export class Game {
     requestAnimationFrame(loop);
   }
 
-  private frame(now: number): void {
+  private frame(now: number, render = true): void {
     const steps = this.time.tick(now);
     const fdt = this.time.fixedDt;
     this.input.update(this.time.frameDt);
@@ -97,7 +114,7 @@ export class Game {
       }
     }
     for (const s of this.systems) s.update?.(this.time.frameDt, this.time.alpha);
-    this.renderer.render(this.scene, this.camera);
+    if (render) this.renderer.render(this.scene, this.camera);
     this.stats.frames++;
     this.fpsAcc += this.time.frameDt; this.fpsFrames++;
     if (this.fpsAcc >= 0.5) { this.stats.fps = Math.round(this.fpsFrames / this.fpsAcc); this.fpsAcc = 0; this.fpsFrames = 0; }
