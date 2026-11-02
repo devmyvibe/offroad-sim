@@ -55,6 +55,8 @@ export class Settings {
     } catch { /* storage unavailable */ }
     const q = new URLSearchParams(location.search).get('quality');
     if (q === 'low' || q === 'medium' || q === 'high') this.data.quality = q;
+    const l = new URLSearchParams(location.search).get('lang');
+    if (l === 'he' || l === 'en') this.data.lang = l;
   }
 
   get preset(): QualityPreset { return PRESETS[this.data.quality]; }

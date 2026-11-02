@@ -28,7 +28,7 @@ function addLedge(physics: PhysicsWorld, hm: Heightmap, path: Polyline, t: numbe
   const p = path.at(t), tg = path.tangent(t);
   const yaw = Math.atan2(tg.x, tg.z);
   // Ledge top = ground just before the step + step height; the back follows the trail's own slope.
-  const lower = hm.sample(p.x - tg.x * 3, p.z - tg.z * 3);
+  const lower = hm.sample(p.x - tg.x * 1, p.z - tg.z * 1);
   const upper = lower + h;
   const width = 9.5, length = 11, faceRun = h * 0.9;
   const backRise = Math.max(0, hm.sample(p.x + tg.x * length, p.z + tg.z * length) - upper);
@@ -52,9 +52,9 @@ function addLedge(physics: PhysicsWorld, hm: Heightmap, path: Polyline, t: numbe
 
 /** Convex prism: cross-section points (z, y) extruded along x over [-w/2, w/2], with proper normals. */
 function prismGeometry(pts: [number, number][], width: number): THREE.BufferGeometry {
-  const pos: number[] = [], uv: number[] = [];
+  const pos: number[] = [];
   const hw = width / 2;
-  const tri = (a: number[], b: number[], c: number[]) => { pos.push(...a, ...b, ...c); uv.push(a[2] * 0.25, a[1] * 0.25, b[2] * 0.25, b[1] * 0.25, c[2] * 0.25, c[1] * 0.25); };
+  const tri = (a: number[], b: number[], c: number[]) => { pos.push(...a, ...b, ...c); };
   const n = pts.length;
   for (let i = 0; i < n; i++) {
     const [z0, y0] = pts[i], [z1, y1] = pts[(i + 1) % n];
@@ -68,12 +68,21 @@ function prismGeometry(pts: [number, number][], width: number): THREE.BufferGeom
   }
   const g = new THREE.BufferGeometry();
   g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
-  g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
   g.computeVertexNormals();
-  // Winding may be inverted depending on point order; flip if normals point inward (check the top face).
+  // Flip winding if the normals point inward (top face must face up).
   const nrm = g.getAttribute('normal');
   let sumY = 0; for (let i = 0; i < nrm.count; i++) sumY += nrm.getY(i);
   if (sumY < 0) { const idx = Array.from({ length: pos.length / 3 }, (_, i) => i); for (let i = 0; i < idx.length; i += 3) { const t = idx[i + 1]; idx[i + 1] = idx[i + 2]; idx[i + 2] = t; } g.setIndex(idx); g.computeVertexNormals(); }
+  // Per-face planar UVs chosen by the face normal so no face gets stretched stripes.
+  const uv = new Float32Array(nrm.count * 2);
+  const P = g.getAttribute('position');
+  for (let i = 0; i < nrm.count; i++) {
+    const nx = Math.abs(nrm.getX(i)), ny = Math.abs(nrm.getY(i)), nz = Math.abs(nrm.getZ(i));
+    const x = P.getX(i), y = P.getY(i), z = P.getZ(i);
+    const [u, v] = ny >= nx && ny >= nz ? [x, z] : nx >= nz ? [z, y] : [x, y];
+    uv[i * 2] = u * 0.3; uv[i * 2 + 1] = v * 0.3;
+  }
+  g.setAttribute('uv', new THREE.BufferAttribute(uv, 2));
   return g;
 }
 

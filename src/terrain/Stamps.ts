@@ -96,11 +96,10 @@ export function stampRockSteps(hm: Heightmap, path: Polyline, noise: Noise, step
     { path, width, edge: 6, smooth: 40, sand: 0.05 },
     (c) => 0.05 * noise.fbm(c.x * 0.5, c.z * 0.5, 2) + 0.04 * noise.n2(c.x * 2, c.z * 2),
     (t) => {
+      // The ledge collider/mesh (Obstacles.ts) provides the sharp face at s.t; the heightmap
+      // only has to reach the upper level under the ledge's back end (11 m later).
       let h = 0;
-      for (const s of steps) {
-        const face = s.h * 0.6; // horizontal run of the face
-        h += s.h * smoothstep(s.t - face * 0.5, s.t + face * 0.5, t);
-      }
+      for (const s of steps) h += s.h * smoothstep(s.t + 5, s.t + 10, t);
       return h;
     },
   );
