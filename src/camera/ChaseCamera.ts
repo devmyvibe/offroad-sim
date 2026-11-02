@@ -16,6 +16,9 @@ export class ChaseCamera {
   orbit = 0;
   /** when set, the orbit holds this angle instead of decaying (debug views) */
   orbitLock: number | null = null;
+  /** extra elevation (radians) and distance multiplier from mouse look */
+  pitchOffset = 0;
+  zoom = 1;
 
   constructor(private camera: THREE.PerspectiveCamera, private hm: TerrainQuery) {}
 
@@ -38,9 +41,11 @@ export class ChaseCamera {
       if (Math.abs(this.orbit) < 0.01) this.orbit = 0;
     }
     const dir = this.heading.clone().applyAxisAngle(new THREE.Vector3(0, 1, 0), this.orbit);
-    const dynDist = this.distance + Math.min(3, speed * 0.08);
-    const desired = targetPos.clone().addScaledVector(dir, -dynDist);
-    desired.y = targetPos.y + this.height;
+    const dynDist = (this.distance + Math.min(3, speed * 0.08)) * this.zoom;
+    const radius = Math.hypot(dynDist, this.height * this.zoom);
+    const elev = Math.max(-0.05, Math.min(1.35, Math.atan2(this.height, this.distance) + this.pitchOffset));
+    const desired = targetPos.clone().addScaledVector(dir, -Math.cos(elev) * radius);
+    desired.y = targetPos.y + Math.sin(elev) * radius;
     // Keep above ground.
     const ground = this.hm.sample(desired.x, desired.z);
     if (desired.y < ground + 1.2) desired.y = ground + 1.2;

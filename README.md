@@ -35,6 +35,7 @@ npm run preview    # serve dist/
 | Handbrake | Space | P |
 | Drive mode 2H → 4H → 4L → 2H | B | ◀ 2H / 4L ▶ |
 | Camera (chase / cockpit) | C | 📷 |
+| Look around / zoom | Mouse drag / wheel, double-click resets | Drag screen / pinch |
 | Reset to last checkpoint | R | ↺ |
 | Pause / menu | Esc | ☰ |
 | Debug free camera | F3 | – |

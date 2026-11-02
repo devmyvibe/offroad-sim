@@ -15,6 +15,8 @@ export interface VehicleVisual {
   steeringWheel?: THREE.Object3D;
   eye: THREE.Object3D;
   headlights: THREE.SpotLight[];
+  /** windows material, so the cockpit view can make it clearer from inside */
+  glass?: THREE.MeshPhysicalMaterial;
 }
 
 export function buildTrooperVisual(): VehicleVisual {
@@ -157,7 +159,7 @@ export function buildTrooperVisual(): VehicleVisual {
     l.position.set(x, beltY - 0.17, fz); l.target.position.set(x, -0.6, fz + 12);
     root.add(l, l.target); headlights.push(l);
   }
-  return { root, wheels, steeringWheel, eye, headlights };
+  return { root, wheels, steeringWheel, eye, headlights, glass };
 }
 
 class BoxGeometry extends THREE.BoxGeometry {}

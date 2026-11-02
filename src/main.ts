@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { Game } from './core/Game';
 import { FreeCamera } from './camera/FreeCamera';
 import { ChaseCamera } from './camera/ChaseCamera';
+import { MouseLook } from './camera/MouseLook';
 import { buildMap, type BuiltMap } from './world/Map01';
 import { ProceduralTextures } from './terrain/ProceduralTextures';
 import { createTerrainMaterial } from './terrain/TerrainMaterial';
@@ -39,6 +40,7 @@ class App {
   vehicle!: Vehicle;
   sky!: DesertSky;
   chase!: ChaseCamera;
+  look!: MouseLook;
   free!: FreeCamera;
   hud!: Hud;
   menu!: Menu;
@@ -111,6 +113,7 @@ class App {
     this.vehicle.onMessage((k) => this.hud.toast(this.i18n.t(k)));
 
     this.chase = new ChaseCamera(camera, this.map.terrain);
+    this.look = new MouseLook(game.canvas);
     this.free = new FreeCamera(camera, game.canvas);
     window.__free = this.free;
     if (this.params.has('orbit')) this.chase.orbitLock = Number(this.params.get('orbit'));
@@ -226,7 +229,7 @@ class App {
       case 'driveModeDown': this.vehicle.cycleMode(-1); break;
       case 'reset': this.resetVehicle(); break;
       case 'headlights': this.vehicle.setHeadlights(true); break;
-      case 'camera': this.camMode = this.camMode === 'chase' ? 'cockpit' : 'chase'; this.chase.snap(); break;
+      case 'camera': this.camMode = this.camMode === 'chase' ? 'cockpit' : 'chase'; this.look.reset(); this.chase.snap(); break;
       case 'debug':
         this.camMode = this.camMode === 'free' ? 'chase' : 'free';
         this.free.setActive(this.camMode === 'free');
@@ -255,18 +258,28 @@ class App {
     const { camera } = this.game;
     const v = this.vehicle;
     v.syncVisual();
+    if (v.visual.glass) v.visual.glass.opacity = this.camMode === 'cockpit' && this.mode !== 'menu' ? 0.12 : 0.8;
     if (this.mode === 'menu') {
       // Slow orbit around the parked truck behind the menu.
       this.menuOrbit += dt * 0.12;
       const r = 9, y = v.position.y + 2.2;
       camera.position.set(v.position.x + Math.cos(this.menuOrbit) * r, y, v.position.z + Math.sin(this.menuOrbit) * r);
       camera.lookAt(v.position.x, v.position.y + 0.6, v.position.z);
-    } else if (this.camMode === 'chase') this.chase.update(dt, v.position, v.forward, v.velocity);
-    else if (this.camMode === 'cockpit') {
+    } else if (this.camMode === 'chase') {
+      this.look.update(dt, v.telemetry.speedKmh > 8);
+      if (camera.near !== 0.3) { camera.near = 0.3; camera.updateProjectionMatrix(); }
+      if (this.chase.orbitLock === null) this.chase.orbit = this.look.yaw;
+      this.chase.pitchOffset = this.look.pitch;
+      this.chase.zoom = this.look.zoom;
+      this.chase.update(dt, v.position, v.forward, v.velocity);
+    } else if (this.camMode === 'cockpit') {
+      this.look.update(dt, v.telemetry.speedKmh > 8);
+      if (camera.near !== 0.05) { camera.near = 0.05; camera.updateProjectionMatrix(); }
       const eye = v.visual.eye.getWorldPosition(new THREE.Vector3());
       camera.position.copy(eye);
-      const q = v.visual.root.quaternion;
-      camera.quaternion.copy(q);
+      // The truck faces +Z, a camera looks down -Z: turn around, then apply head look.
+      camera.quaternion.copy(v.visual.root.quaternion)
+        .multiply(new THREE.Quaternion().setFromEuler(new THREE.Euler(-this.look.pitch * 0.8, Math.PI + this.look.yaw, 0, 'YXZ')));
     } else this.free.update(dt);
     this.sky.follow(v.position);
     this.emitDust(dt);

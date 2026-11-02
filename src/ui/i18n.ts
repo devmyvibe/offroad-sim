@@ -65,8 +65,8 @@ const he: Dict = {
   'quality.low': 'נמוכה', 'quality.medium': 'בינונית', 'quality.high': 'גבוהה',
   'on': 'פעיל', 'off': 'כבוי',
   'controls.title': 'שליטה',
-  'controls.keys': 'W/S או חיצים: גז/בלם-אחורי · A/D: היגוי · רווח: בלם יד · B: מעבר הנעה (2H ← 4H ← 4L) · C: מצלמה · R: איפוס · Esc: תפריט',
-  'controls.touch': 'במגע: הגה בצד שמאל, גז ובלם בצד ימין, כפתורי מצב הנעה ומצלמה למעלה.',
+  'controls.keys': 'W/S או חיצים: גז/בלם-אחורי · A/D: היגוי · רווח: בלם יד · B: מעבר הנעה (2H ← 4H ← 4L) · C: מצלמה · גרירת עכבר: סיבוב מבט · גלגלת: זום · לחיצה כפולה: איפוס מבט · R: איפוס · Esc: תפריט',
+  'controls.touch': 'במגע: הגה בצד שמאל, גז ובלם בצד ימין, כפתורי מצב הנעה ומצלמה למעלה. גרירה על המסך מסובבת את המבט, צביטה לזום.',
   'free.title': 'נסיעה חופשית',
   'free.desc': 'כל המפה פתוחה. אין טיימר ואין כוכבים.',
 };
@@ -134,8 +134,8 @@ const en: Dict = {
   'quality.low': 'Low', 'quality.medium': 'Medium', 'quality.high': 'High',
   'on': 'On', 'off': 'Off',
   'controls.title': 'Controls',
-  'controls.keys': 'W/S or arrows: throttle/brake-reverse · A/D: steer · Space: handbrake · B: drive mode (2H → 4H → 4L) · C: camera · R: reset · Esc: menu',
-  'controls.touch': 'Touch: steering on the left, throttle and brake on the right, drive-mode and camera buttons at the top.',
+  'controls.keys': 'W/S or arrows: throttle/brake-reverse · A/D: steer · Space: handbrake · B: drive mode (2H → 4H → 4L) · C: camera · Mouse drag: look around · Wheel: zoom · Double-click: reset view · R: reset · Esc: menu',
+  'controls.touch': 'Touch: steering on the left, throttle and brake on the right, drive-mode and camera buttons at the top. Drag the screen to look around, pinch to zoom.',
   'free.title': 'Free roam',
   'free.desc': 'The whole map is open. No timer, no stars.',
 };
