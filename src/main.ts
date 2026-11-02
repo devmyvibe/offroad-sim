@@ -9,6 +9,9 @@ import { buildTerrainGeometry, createTerrainCollider } from './terrain/TerrainMe
 import { DesertSky } from './world/Sky';
 import { Vehicle } from './vehicle/Vehicle';
 import { buildObstacles } from './world/Obstacles';
+import { buildProps } from './world/Props';
+import { Dust } from './world/Dust';
+import { VehicleAudio } from './vehicle/VehicleAudio';
 import { I18n, formatTime } from './ui/i18n';
 import { Hud } from './ui/Hud';
 import { Menu } from './ui/Menu';
@@ -35,6 +38,8 @@ class App {
   menu!: Menu;
   touch!: TouchControls;
   touchMode = false;
+  dust!: Dust;
+  audio!: VehicleAudio;
   i18n!: I18n;
   mode: Mode = 'menu';
   camMode: 'chase' | 'cockpit' | 'free' = 'chase';
@@ -66,6 +71,12 @@ class App {
     createTerrainCollider(physics, this.map.hm);
     const rockMat = new THREE.MeshStandardMaterial({ map: textures.rock.albedo, normalMap: textures.rock.normal, roughness: 0.85, color: 0xb9a58a });
     scene.add(buildObstacles(physics, this.map.hm, this.map.paths, rockMat));
+    scene.add(buildProps(physics, this.map.hm, this.map.paths, rockMat, settings.preset.props));
+    this.dust = new Dust(settings.preset.dust ? 600 : 120);
+    scene.add(this.dust.points);
+    this.audio = new VehicleAudio();
+    this.audio.setVolume(settings.data.volume); this.audio.setEnabled(settings.data.sound);
+    settings.onChange((d) => { this.audio.setVolume(d.volume); this.audio.setEnabled(d.sound); });
 
     this.sky = new DesertSky(scene, game.renderer);
     this.sky.setShadowQuality(settings.preset.shadowMapSize, settings.preset.shadows);
@@ -235,6 +246,9 @@ class App {
       camera.quaternion.copy(q);
     } else this.free.update(dt);
     this.sky.follow(v.position);
+    this.emitDust(dt);
+    this.dust.update(dt);
+    this.audio.update(v.telemetry, this.game.paused || this.mode === 'menu');
 
     // Flip helper.
     if (this.mode !== 'menu' && v.flippedSeconds > 3) { this.flipToast -= dt; if (this.flipToast <= 0) { this.hud.toast(this.i18n.t('msg.flipped'), 3); this.flipToast = 4; } }
@@ -263,6 +277,26 @@ class App {
       pos: v.position.toArray().map((n) => +n.toFixed(2)), speedKmh: +t.speedKmh.toFixed(1), rpm: Math.round(t.rpm), gear: t.gear, driveMode: t.mode,
       pitch: +t.pitchDeg.toFixed(1), roll: +t.rollDeg.toFixed(1), upright: t.upright, contacts: t.wheels.map((w) => w.contact), slip: t.wheels.map((w) => +w.slip.toFixed(2)), dig: t.wheels.map((w) => +w.dig.toFixed(2)),
     };
+  }
+
+  private dustAcc = 0;
+  private emitDust(dt: number): void {
+    const v = this.vehicle, t = v.telemetry;
+    const speed = Math.abs(t.forwardSpeed);
+    this.dustAcc += dt;
+    const interval = 1 / 40;
+    while (this.dustAcc >= interval) {
+      this.dustAcc -= interval;
+      for (let i = 0; i < 4; i++) {
+        const w = t.wheels[i];
+        if (!w.contact) continue;
+        const intensity = Math.min(1, (speed / 12) * (0.3 + 0.7 * w.sand) + w.slip * t.wheelSpin * 1.2 + (w.dig > 0.2 ? 0.6 : 0));
+        if (intensity < 0.12 || Math.random() > intensity) continue;
+        const cp = v.controller.wheelContactPoint(i);
+        if (!cp) continue;
+        this.dust.emit(cp.x, cp.y, cp.z, -v.forward.x * speed * 0.3, 0, -v.forward.z * speed * 0.3, intensity * (0.5 + 0.5 * w.sand));
+      }
+    }
   }
 
   /* ---------- test hooks (URL params) ---------- */
