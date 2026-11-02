@@ -14,6 +14,8 @@ import { RockField, createRockMaterial } from './world/Rocks';
 import { placeTechnicalRocks, gardenLine, TECH } from './world/TechnicalTrail';
 import { Rng } from './core/Random';
 import { Dust } from './world/Dust';
+import { buildHorizon } from './world/Horizon';
+import { MAP_SIZE } from './world/Map01';
 import { VehicleAudio } from './vehicle/VehicleAudio';
 import { I18n, formatTime } from './ui/i18n';
 import { Hud } from './ui/Hud';
@@ -92,6 +94,7 @@ class App {
     this.audio.setVolume(settings.data.volume); this.audio.setEnabled(settings.data.sound);
     settings.onChange((d) => { this.audio.setVolume(d.volume); this.audio.setEnabled(d.sound); });
 
+    scene.add(buildHorizon(MAP_SIZE));
     this.sky = new DesertSky(scene, game.renderer);
     this.sky.setShadowQuality(settings.preset.shadowMapSize, settings.preset.shadows);
     this.sky.setFogFar(settings.preset.fogFar);

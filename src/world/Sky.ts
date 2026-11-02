@@ -4,15 +4,15 @@ import { Sky } from 'three/examples/jsm/objects/Sky.js';
 /** Desert sky, sun light with a shadow frustum that follows a target. */
 export class DesertSky {
   readonly sky = new Sky();
-  readonly sun = new THREE.DirectionalLight(0xfff1dc, 2.9);
-  readonly hemi = new THREE.HemisphereLight(0xbfd6f5, 0x9a7a4a, 0.28);
+  readonly sun = new THREE.DirectionalLight(0xffe6c4, 3.0);
+  readonly hemi = new THREE.HemisphereLight(0xb9d0f0, 0x9a7a4a, 0.32);
   readonly sunDir = new THREE.Vector3();
   private shadowRadius = 90;
 
-  constructor(private scene: THREE.Scene, renderer: THREE.WebGLRenderer, elevationDeg = 38, azimuthDeg = 155) {
+  constructor(private scene: THREE.Scene, renderer: THREE.WebGLRenderer, elevationDeg = 31, azimuthDeg = 205) {
     this.sky.scale.setScalar(20000);
     const u = this.sky.material.uniforms;
-    u.turbidity.value = 6; u.rayleigh.value = 1.6; u.mieCoefficient.value = 0.012; u.mieDirectionalG.value = 0.82;
+    u.turbidity.value = 7; u.rayleigh.value = 1.9; u.mieCoefficient.value = 0.016; u.mieDirectionalG.value = 0.85;
     const phi = THREE.MathUtils.degToRad(90 - elevationDeg), theta = THREE.MathUtils.degToRad(azimuthDeg);
     this.sunDir.setFromSphericalCoords(1, phi, theta);
     u.sunPosition.value.copy(this.sunDir);
@@ -38,7 +38,7 @@ export class DesertSky {
     scene.environmentIntensity = 0.22;
     pmrem.dispose();
 
-    scene.fog = new THREE.Fog(0xd8c3a3, 500, 1400);
+    scene.fog = new THREE.Fog(0xdcc7a6, 500, 1400);
   }
 
   setShadowQuality(mapSize: number, enabled: boolean): void {
@@ -49,7 +49,7 @@ export class DesertSky {
 
   setFogFar(far: number): void {
     if (new URLSearchParams(location.search).has('nofog')) { this.scene.fog = null; return; }
-    const f = this.scene.fog as THREE.Fog; f.far = far; f.near = far * 0.35;
+    const f = this.scene.fog as THREE.Fog; f.far = far * 1.6; f.near = far * 0.3;
   }
 
   /** Keep the shadow frustum centred on the player each frame. */

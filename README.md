@@ -48,7 +48,7 @@ src/
   core/      Game loop (fixed-step physics), input, settings, save, PRNG
   physics/   Rapier world wrapper
   terrain/   Heightmap, noise, trail stamps, mesh + collider, splat material, procedural textures
-  world/     Map definition, sky/sun, obstacles (rock ledges, humps), props, dust
+  world/     Map definition, 1 m technical-trail patch, rocks (convex hulls), sky/sun, horizon, obstacles, props, dust
   vehicle/   Trooper spec, drivetrain, vehicle controller, procedural body, audio
   trails/    Trail definitions, run logic (checkpoints/timer/stars), markers
   camera/    Chase and free cameras
@@ -62,7 +62,7 @@ scripts/
 Useful for automated checks in headless Chromium (software WebGL):
 
 - `?quality=low|medium|high`, `?lang=he|en`
-- `?run=wadi|crossings|rocksteps` start a trail directly
+- `?run=wadi|crossings|technical` start a trail directly
 - `?free=1`, `?trail=<id>&t=<metres>` spawn on a trail, `?spawn=x,z,heading`
 - `?mode=2H|4H|4L`
 - `?autopilot=<id>&throttle=0.8&cap=15` follow a trail (pure pursuit)
@@ -79,7 +79,7 @@ node scripts/screenshot.mjs menu --url="http://localhost:5199/?lang=he"
 
 ## Tuning
 
-Vehicle numbers live in `src/vehicle/TrooperSpec.ts` (mass, suspension, torque curve, gear ratios, grip per surface, sand drag). Trails and rock step heights are in `src/trails/trails.ts`; the map in `src/world/Map01.ts`.
+Vehicle numbers live in `src/vehicle/TrooperSpec.ts` (mass, suspension, torque curve, gear ratios, grip per surface, sand drag). Trail routes are in `src/trails/trails.ts`; the base map in `src/world/Map01.ts`; the 1 m technical-trail patch (sections, ledges, rock layout) in `src/world/TechnicalTrail.ts`.
 
 ## Roadmap
 

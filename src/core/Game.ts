@@ -38,7 +38,7 @@ export class Game {
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
     this.renderer.toneMappingExposure = 0.62;
-    this.camera = new THREE.PerspectiveCamera(60, 1, 0.3, 3000);
+    this.camera = new THREE.PerspectiveCamera(60, 1, 0.3, 6000);
     if (new URLSearchParams(location.search).has('fastsim')) this.time.maxSteps = 30;
     this.applyQuality();
     this.settings.onChange(() => this.applyQuality());

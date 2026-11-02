@@ -13,9 +13,9 @@ export interface QualityPreset {
 }
 
 export const PRESETS: Record<Quality, QualityPreset> = {
-  low:    { pixelRatio: 1,   shadows: false, shadowMapSize: 1024, terrainSegments: 256, props: 0.35, dust: false, anisotropy: 2, fogFar: 900 },
-  medium: { pixelRatio: 1.5, shadows: true,  shadowMapSize: 2048, terrainSegments: 384, props: 0.7,  dust: true,  anisotropy: 4, fogFar: 1300 },
-  high:   { pixelRatio: 2,   shadows: true,  shadowMapSize: 4096, terrainSegments: 512, props: 1,    dust: true,  anisotropy: 8, fogFar: 1800 },
+  low:    { pixelRatio: 1,   shadows: false, shadowMapSize: 1024, terrainSegments: 256, props: 0.35, dust: false, anisotropy: 2, fogFar: 1100 },
+  medium: { pixelRatio: 1.5, shadows: true,  shadowMapSize: 2048, terrainSegments: 384, props: 0.7,  dust: true,  anisotropy: 4, fogFar: 1500 },
+  high:   { pixelRatio: 2,   shadows: true,  shadowMapSize: 4096, terrainSegments: 512, props: 1,    dust: true,  anisotropy: 8, fogFar: 2000 },
 };
 
 export interface SettingsData {
