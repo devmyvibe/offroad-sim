@@ -72,13 +72,12 @@ export class TouchControls {
     // Auto-centre when released.
     if (this.steerPointer === null && this.steer !== 0) { const k = Math.min(1, dt * 7); this.steer += (0 - this.steer) * k; if (Math.abs(this.steer) < 0.02) this.steer = 0; }
     const knob = this.el.querySelector<HTMLElement>('#t-knob')!;
-    const dir = document.documentElement.dir === 'rtl' ? -1 : 1;
-    knob.style.transform = `translateX(${this.steer * 70 * dir}px)`;
+    knob.style.transform = `translateX(${this.steer * 70}px)`;
     const names = new Set(this.held.values());
     this.throttle = names.has('throttle') ? 1 : 0;
     this.brake = names.has('brake') ? 1 : 0;
     this.handbrake = names.has('handbrake');
-    const steerVal = (this.invert ? -1 : 1) * this.steer * dir;
+    const steerVal = (this.invert ? -1 : 1) * this.steer;
     this.input.setOverride({ steer: steerVal, throttle: this.throttle, brake: this.brake, reverse: this.brake > 0, handbrake: this.handbrake });
   }
 }

@@ -100,23 +100,27 @@ input[type=range] { width: 160px; }
 .loading { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 22px; color: #ffd9a3; background: #1b1710; }
 
 /* ---------- touch controls ---------- */
-.touch { position: absolute; inset: 0; pointer-events: none; }
+.touch { position: absolute; inset: 0; pointer-events: none; direction: ltr; }
 .touch > * { pointer-events: auto; }
 .t-top { position: absolute; top: max(8px, env(safe-area-inset-top)); left: 50%; transform: translateX(-50%); display: flex; gap: 8px; }
 .t-btn { min-width: 46px; height: 42px; padding: 0 10px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.18); background: var(--paper); color: #f5ecd9; font: 700 16px var(--font); touch-action: none; }
 .t-btn.wide { min-width: 64px; }
 .t-btn:active { background: var(--accent); color: #1b1710; }
-.t-steer { position: absolute; bottom: max(20px, env(safe-area-inset-bottom)); inset-inline-start: 18px; width: 230px; height: 120px; display: flex; flex-direction: column; align-items: center; justify-content: center; touch-action: none; }
+.t-steer { position: absolute; bottom: max(14px, env(safe-area-inset-bottom)); left: 18px; width: 230px; height: 120px; display: flex; flex-direction: column; align-items: center; justify-content: center; touch-action: none; }
 .t-track { width: 200px; height: 54px; border-radius: 27px; background: var(--paper); border: 1px solid rgba(255,255,255,0.15); position: relative; }
 .t-knob { position: absolute; top: 5px; left: 50%; margin-left: -22px; width: 44px; height: 44px; border-radius: 50%; background: var(--accent); box-shadow: 0 2px 10px rgba(0,0,0,0.4); }
-.t-pedals { position: absolute; bottom: max(20px, env(safe-area-inset-bottom)); inset-inline-end: 18px; display: flex; gap: 10px; align-items: flex-end; touch-action: none; }
+.t-pedals { position: absolute; bottom: max(14px, env(safe-area-inset-bottom)); right: 18px; display: flex; gap: 10px; align-items: flex-end; touch-action: none; }
 .t-pedal { display: flex; align-items: center; justify-content: center; border-radius: 18px; background: var(--paper); border: 1px solid rgba(255,255,255,0.15); color: #f5ecd9; font: 800 26px var(--font); user-select: none; }
 .t-pedal.gas { width: 92px; height: 120px; }
 .t-pedal.brake { width: 80px; height: 96px; }
 .t-pedal.hb { width: 54px; height: 54px; font-size: 20px; }
 .t-pedal.on { background: var(--accent); color: #1b1710; }
 .t-pedal.brake.on { background: var(--danger); }
-.hud.touch-mode .hud-dash { bottom: max(150px, calc(env(safe-area-inset-bottom) + 140px)); }
+.hud.touch-mode .hud-dash { bottom: max(10px, env(safe-area-inset-bottom)); gap: 10px; padding: 6px 12px; }
+.hud.touch-mode .hud-speed .val { font-size: 28px; }
+.hud.touch-mode .hud-gear .val { font-size: 18px; }
+.hud.touch-mode .hud-rpm { width: 56px; }
+.hud.touch-mode .hud-mode { padding: 4px 8px; font-size: 14px; }
 .hud.touch-mode .hud-run { top: max(56px, calc(env(safe-area-inset-top) + 50px)); }
 .hud.touch-mode .hud-incl { top: max(56px, calc(env(safe-area-inset-top) + 50px)); }
 .rotate-hint { position: absolute; inset: 0; display: none; align-items: center; justify-content: center; background: rgba(10,8,5,0.85); color: #ffd9a3; font-size: 20px; text-align: center; padding: 24px; z-index: 5; }
