@@ -33,7 +33,7 @@ npm run preview    # serve dist/
 | Throttle / brake-reverse | W/S or ↑/↓ | right pedals |
 | Steer | A/D or ←/→ | left slider |
 | Handbrake | Space | P |
-| Drive mode 2H → 4H → 4L | E / Q | ◀ 2H / 4L ▶ |
+| Drive mode 2H → 4H → 4L → 2H | B | ◀ 2H / 4L ▶ |
 | Camera (chase / cockpit) | C | 📷 |
 | Reset to last checkpoint | R | ↺ |
 | Pause / menu | Esc | ☰ |

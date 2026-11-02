@@ -61,8 +61,7 @@ export class Input {
     const code = e.code;
     if (down && !e.repeat) {
       switch (code) {
-        case 'KeyE': this.fire('driveModeUp'); break;
-        case 'KeyQ': this.fire('driveModeDown'); break;
+        case 'KeyB': this.fire('driveModeUp'); break;
         case 'KeyC': this.fire('camera'); break;
         case 'KeyR': this.fire('reset'); break;
         case 'Escape': this.fire('pause'); break;

@@ -99,9 +99,8 @@ export class Vehicle {
   /** Cycle drive mode; 4L engagement needs a near standstill like the real transfer case. */
   cycleMode(dir: 1 | -1): void {
     const i = MODES.indexOf(this.mode);
-    const next = MODES[Math.min(MODES.length - 1, Math.max(0, i + dir))];
-    if (next === this.mode) return;
-    if ((next === '4L' || this.mode === '4L') && Math.abs(this.telemetry.forwardSpeed) > 2.0) { this.modeMessage?.('msg.stopFor4L'); return; }
+    const next = MODES[(i + dir + MODES.length) % MODES.length];
+    if ((next === '4L' || this.mode === '4L') && Math.abs(this.telemetry.forwardSpeed) > 3.5) { this.modeMessage?.('msg.stopFor4L'); return; }
     this.drivetrain.setMode(next);
     this.modeMessage?.(`msg.mode.${next}`);
   }
@@ -138,8 +137,9 @@ export class Vehicle {
     const speedFactor = 1 - 0.6 * Math.min(1, Math.abs(forwardSpeed) / 25);
     const targetSteer = input.steer * TROOPER.maxSteerRad * speedFactor;
     this.steerAngle += (targetSteer - this.steerAngle) * Math.min(1, dt * 9);
-    c.setWheelSteering(0, this.steerAngle);
-    c.setWheelSteering(1, this.steerAngle);
+    // Rapier's positive steering angle turns towards +X, which is the truck's left; input +1 means right.
+    c.setWheelSteering(0, -this.steerAngle);
+    c.setWheelSteering(1, -this.steerAngle);
 
     // Drivetrain.
     const movingForward = forwardSpeed > 0.5, movingBack = forwardSpeed < -0.5;
@@ -232,7 +232,7 @@ export class Vehicle {
       const spin = w.children[0];
       spin.rotation.x = c.wheelRotation(i) ?? 0;
     }
-    if (this.visual.steeringWheel) this.visual.steeringWheel.rotation.z = -this.steerAngle * 2.4;
+    if (this.visual.steeringWheel) this.visual.steeringWheel.rotation.z = this.steerAngle * 2.4;
   }
 
   setHeadlights(on: boolean): void {

@@ -338,7 +338,7 @@ class App {
     let err = want - have; while (err > Math.PI) err -= 2 * Math.PI; while (err < -Math.PI) err += 2 * Math.PI;
     const over = v.telemetry.forwardSpeed > ap.cap;
     const done = near.t >= ap.path.length - 3 || (this.runner?.state === 'finished');
-    input.setOverride({ steer: Math.max(-1, Math.min(1, err * 1.6)), throttle: over || done ? 0 : ap.throttle, brake: over && !done ? 0.4 : done ? 1 : 0, reverse: false, handbrake: false });
+    input.setOverride({ steer: Math.max(-1, Math.min(1, -err * 1.6)), throttle: over || done ? 0 : ap.throttle, brake: over && !done ? 0.4 : done ? 1 : 0, reverse: false, handbrake: false });
     ap.stuckFor = Math.abs(v.telemetry.forwardSpeed) < 0.3 && !done ? ap.stuckFor + dt : 0;
   }
 }
