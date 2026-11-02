@@ -2,8 +2,8 @@ import * as THREE from 'three';
 import { Noise, clamp } from './Noise';
 
 export interface SurfaceTextures {
-  albedo: THREE.DataTexture;
-  normal: THREE.DataTexture;
+  albedo: THREE.Texture;
+  normal: THREE.Texture;
 }
 
 /**

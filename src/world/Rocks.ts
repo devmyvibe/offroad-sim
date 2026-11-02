@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import type { PhysicsWorld } from '../physics/World';
 import { Noise } from '../terrain/Noise';
-import type { ProceduralTextures } from '../terrain/ProceduralTextures';
+import type { SurfaceTextureSet } from '../terrain/TextureSet';
 import { Rng } from '../core/Random';
 
 /**
@@ -94,11 +94,12 @@ export class RockField {
 }
 
 /** Triplanar rock material: world-space projection so instanced rocks of any shape look consistent. */
-export function createRockMaterial(tex: ProceduralTextures): THREE.MeshStandardMaterial {
-  const mat = new THREE.MeshStandardMaterial({ color: 0xcdbb9e, roughness: 0.88, metalness: 0 });
+export function createRockMaterial(tex: SurfaceTextureSet): THREE.MeshStandardMaterial & { refresh(): void } {
+  const mat = new THREE.MeshStandardMaterial({ color: 0xd8c3a0, roughness: 0.9, metalness: 0, envMapIntensity: 0.4 });
+  const uni = { tRockA: { value: tex.boulder.albedo }, tRockN: { value: tex.boulder.normal } };
   mat.onBeforeCompile = (shader) => {
-    shader.uniforms.tRockA = { value: tex.rock.albedo };
-    shader.uniforms.tRockN = { value: tex.rock.normal };
+    shader.uniforms.tRockA = uni.tRockA;
+    shader.uniforms.tRockN = uni.tRockN;
     shader.vertexShader = shader.vertexShader
       .replace('#include <common>', '#include <common>\n varying vec3 vWp; varying vec3 vWn;')
       .replace('#include <fog_vertex>', '#include <fog_vertex>\n vWp = (modelMatrix * vec4(transformed, 1.0)).xyz;\n #ifdef USE_INSTANCING\n vWn = normalize(mat3(modelMatrix) * mat3(instanceMatrix) * objectNormal);\n #else\n vWn = normalize(mat3(modelMatrix) * objectNormal);\n #endif');
@@ -121,5 +122,7 @@ export function createRockMaterial(tex: ProceduralTextures): THREE.MeshStandardM
         }`);
   };
   mat.customProgramCacheKey = () => 'rock-triplanar-v1';
-  return mat;
+  const out = mat as THREE.MeshStandardMaterial & { refresh(): void };
+  out.refresh = () => { uni.tRockA.value = tex.boulder.albedo; uni.tRockN.value = tex.boulder.normal; };
+  return out;
 }

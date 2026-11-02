@@ -5,6 +5,7 @@ import { ChaseCamera } from './camera/ChaseCamera';
 import { buildMap, type BuiltMap } from './world/Map01';
 import { ProceduralTextures } from './terrain/ProceduralTextures';
 import { createTerrainMaterial } from './terrain/TerrainMaterial';
+import { loadSurfaceTextures } from './terrain/TextureSet';
 import { buildTerrainGeometry, createTerrainCollider } from './terrain/TerrainMesh';
 import { DesertSky } from './world/Sky';
 import { Vehicle } from './vehicle/Vehicle';
@@ -69,8 +70,12 @@ class App {
 
     this.map = buildMap();
     window.__map = this.map;
-    const textures = new ProceduralTextures(256, settings.preset.anisotropy);
+    const procedural = new ProceduralTextures(256, settings.preset.anisotropy);
+    const refreshers: (() => void)[] = [];
+    const textures = loadSurfaceTextures(procedural, settings.preset.anisotropy, () => refreshers.forEach((f) => f()), !this.params.has('notex'));
+    (window as unknown as { __tex: unknown }).__tex = textures;
     const terrainMat = createTerrainMaterial(textures);
+    refreshers.push(() => terrainMat.refresh());
     const terrain = new THREE.Mesh(buildTerrainGeometry(this.map.hm, settings.preset.terrainSegments), terrainMat);
     terrain.receiveShadow = true;
     scene.add(terrain);
@@ -82,6 +87,7 @@ class App {
     scene.add(patchMesh);
     createTerrainCollider(physics, this.map.patch);
     const rockMat = createRockMaterial(textures);
+    refreshers.push(() => rockMat.refresh());
     scene.add(buildObstacles(physics, this.map.terrain, this.map.paths, rockMat));
     scene.add(buildProps(physics, this.map.hm, this.map.terrain, this.map.patch, this.map.paths, rockMat, settings.preset.props));
     const rocks = new RockField(physics, rockMat, 600);

@@ -4,8 +4,8 @@ import { Sky } from 'three/examples/jsm/objects/Sky.js';
 /** Desert sky, sun light with a shadow frustum that follows a target. */
 export class DesertSky {
   readonly sky = new Sky();
-  readonly sun = new THREE.DirectionalLight(0xffe6c4, 3.0);
-  readonly hemi = new THREE.HemisphereLight(0xb9d0f0, 0x9a7a4a, 0.32);
+  readonly sun = new THREE.DirectionalLight(0xffe6c4, 2.7);
+  readonly hemi = new THREE.HemisphereLight(0xdcd6c8, 0xa88556, 0.34);
   readonly sunDir = new THREE.Vector3();
   private shadowRadius = 90;
 
