@@ -9,12 +9,12 @@ import { Noise, smoothstep } from '../terrain/Noise';
  * the massif, shrubs prefer sandy lows; nothing spawns on the trails or hub.
  * Larger rocks get sphere colliders so they are real obstacles.
  */
-export function buildProps(physics: PhysicsWorld, base: Heightmap, hm: TerrainQuery, exclude: Heightmap | null, paths: Map<string, Polyline>, rockMat: THREE.Material, density: number): THREE.Group {
+export function buildProps(physics: PhysicsWorld, base: Heightmap, hm: TerrainQuery, exclude: Heightmap[], paths: Map<string, Polyline>, rockMat: THREE.Material, density: number): THREE.Group {
   const group = new THREE.Group();
   const rng = new Rng(4242);
   const noise = new Noise(55);
   const half = base.size / 2 - 20;
-  const inPatch = (x: number, z: number): boolean => !!exclude && exclude.contains(x, z, -5);
+  const inPatch = (x: number, z: number): boolean => exclude.some((p) => p.contains(x, z, -5));
   const trailList = Array.from(paths.entries());
   const rockTrail = paths.get('technical');
 

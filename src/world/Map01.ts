@@ -1,6 +1,7 @@
 import { Heightmap, CompositeTerrain, Polyline, smoothPath } from '../terrain/Heightmap';
 import { createDetailPatch, sinkBaseUnderPatch } from '../terrain/DetailPatch';
 import { stampRidge, stampTechnicalTrail } from './TechnicalTrail';
+import { stampTwisterTrail } from './TwisterTrail';
 import { Noise, smoothstep } from '../terrain/Noise';
 import { stampWadi, stampCrossings, stampDirtRoad } from '../terrain/Stamps';
 import { TRAILS, type TrailDef } from '../trails/trails';
@@ -13,12 +14,15 @@ export interface BuiltMap {
   hm: Heightmap;
   /** 1 m detail patch holding the technical trail */
   patch: Heightmap;
+  /** 1 m detail patch holding the twister trail */
+  patch2: Heightmap;
   terrain: CompositeTerrain;
   paths: Map<string, Polyline>;
   hubHeight: number;
 }
 
 export const PATCH = { cx: 420, cz: -380, size: 640, cell: 1 };
+export const PATCH2 = { cx: -555, cz: 520, size: 520, cell: 1 };
 
 /**
  * Deterministic desert: rolling dune country in the south, broken hills in the
@@ -78,7 +82,7 @@ export function buildMap(): BuiltMap {
   for (const t of TRAILS) {
     const p = new Polyline(smoothPath(t.ctrl, t.kind === 'technical' ? 2 : 4));
     paths.set(t.id, p);
-    if (t.kind !== 'technical') carve(hm, noise, t, p);
+    if (t.kind !== 'technical' && t.kind !== 'twister') carve(hm, noise, t, p);
   }
   for (const t of TRAILS) {
     const s = t.ctrl[0];
@@ -91,15 +95,20 @@ export function buildMap(): BuiltMap {
   const tech = paths.get('technical')!;
   stampRidge(patch, tech);
   stampTechnicalTrail(patch, tech, new Noise(MAP_SEED + 12));
-  sinkBaseUnderPatch(hm, patch);
+  // Second patch: the ground-articulation trail.
+  const patch2 = createDetailPatch(hm, PATCH2.cx, PATCH2.cz, PATCH2.size, PATCH2.cell, new Noise(MAP_SEED + 21));
+  stampTwisterTrail(patch2, paths.get('twister')!, new Noise(MAP_SEED + 22));
 
-  return { hm, patch, terrain: new CompositeTerrain(hm, patch), paths, hubHeight };
+  sinkBaseUnderPatch(hm, patch);
+  sinkBaseUnderPatch(hm, patch2);
+
+  return { hm, patch, patch2, terrain: new CompositeTerrain(hm, [patch, patch2]), paths, hubHeight };
 }
 
 function carve(hm: Heightmap, noise: Noise, t: TrailDef, p: Polyline): void {
   switch (t.kind) {
     case 'wadi': stampWadi(hm, p, noise); break;
     case 'crossings': stampCrossings(hm, p, noise); break;
-    case 'technical': break;
+    case 'technical': case 'twister': break;
   }
 }

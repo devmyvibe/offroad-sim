@@ -14,6 +14,7 @@ import { buildObstacles } from './world/Obstacles';
 import { buildProps } from './world/Props';
 import { RockField, createRockMaterial } from './world/Rocks';
 import { placeTechnicalRocks, gardenLine, TECH } from './world/TechnicalTrail';
+import { placeTwisterRocks } from './world/TwisterTrail';
 import { Rng } from './core/Random';
 import { Dust } from './world/Dust';
 import { buildHorizon } from './world/Horizon';
@@ -84,19 +85,25 @@ class App {
     scene.add(terrain);
     createTerrainCollider(physics, this.map.hm);
     // Detail patch: full 1 m mesh on high, 2 m on medium/low.
-    const patchSegments = settings.data.quality === 'high' ? this.map.patch.n : this.map.patch.n / 2;
-    const patchMesh = new THREE.Mesh(buildTerrainGeometry(this.map.patch, patchSegments), terrainMat);
-    patchMesh.receiveShadow = true;
-    scene.add(patchMesh);
-    createTerrainCollider(physics, this.map.patch);
+    for (const patch of [this.map.patch, this.map.patch2]) {
+      const segs = settings.data.quality === 'high' ? patch.n : patch.n / 2;
+      const patchMesh = new THREE.Mesh(buildTerrainGeometry(patch, segs), terrainMat);
+      patchMesh.receiveShadow = true;
+      scene.add(patchMesh);
+      createTerrainCollider(physics, patch);
+    }
     const rockMat = createRockMaterial(textures);
     refreshers.push(() => rockMat.refresh());
     scene.add(buildObstacles(physics, this.map.terrain, this.map.paths, rockMat));
-    scene.add(buildProps(physics, this.map.hm, this.map.terrain, this.map.patch, this.map.paths, rockMat, settings.preset.props));
+    scene.add(buildProps(physics, this.map.hm, this.map.terrain, [this.map.patch, this.map.patch2], this.map.paths, rockMat, settings.preset.props));
     const rocks = new RockField(physics, rockMat, 600);
     placeTechnicalRocks(rocks, this.map.patch, this.map.paths.get('technical')!, new Rng(77));
     rocks.finalize();
     scene.add(rocks.group);
+    const rocks2 = new RockField(physics, rockMat, 500);
+    placeTwisterRocks(rocks2, this.map.patch2, this.map.paths.get('twister')!, new Rng(91));
+    rocks2.finalize();
+    scene.add(rocks2.group);
     if (!this.params.has('norocks')) loadScannedRocks(scene, physics, this.map.terrain, this.map.hm, this.map.paths, settings.preset.props)
       .then((n) => { (window as unknown as { __scanned: number }).__scanned = n; })
       .catch((e) => console.warn('scanned rocks failed', e));

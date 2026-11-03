@@ -9,10 +9,15 @@ export interface TerrainQuery {
   normal(x: number, z: number, out?: { x: number; y: number; z: number }): { x: number; y: number; z: number };
 }
 
-/** Base heightmap plus an optional high-resolution patch that wins inside its area. */
+/** Base heightmap plus high-resolution patches that win inside their areas. */
 export class CompositeTerrain implements TerrainQuery {
-  constructor(readonly base: Heightmap, readonly patch: Heightmap | null = null) {}
-  private pick(x: number, z: number): Heightmap { return this.patch && this.patch.contains(x, z) ? this.patch : this.base; }
+  constructor(readonly base: Heightmap, readonly patches: Heightmap[] = []) {}
+  private pick(x: number, z: number): Heightmap {
+    for (const p of this.patches) if (p.contains(x, z)) return p;
+    return this.base;
+  }
+  /** true when (x, z) lies inside any detail patch (with an optional extra margin) */
+  inPatch(x: number, z: number, margin = 0): boolean { return this.patches.some((p) => p.contains(x, z, margin)); }
   sample(x: number, z: number): number { return this.pick(x, z).sample(x, z); }
   sampleSand(x: number, z: number): number { return this.pick(x, z).sampleSand(x, z); }
   normal(x: number, z: number, out?: { x: number; y: number; z: number }): { x: number; y: number; z: number } { return this.pick(x, z).normal(x, z, out); }

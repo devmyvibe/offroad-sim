@@ -93,15 +93,17 @@ function planPlacements(terrain: TerrainQuery, base: Heightmap, paths: Map<strin
 
   // Landmarks along every trail's shoulders.
   for (const [id, path] of paths) {
-    const every = id === 'technical' ? 22 : 38;
+    // Spacing / lateral band per trail: the twister gets a tight corridor of big boulders.
+    const cfg = id === 'twister' ? { every: 13, lo: 7.5, hi: 13, min: 6.5 } : id === 'technical' ? { every: 22, lo: 10, hi: 20, min: 9 } : id === 'wadi' ? { every: 38, lo: 22, hi: 34, min: 9 } : { every: 38, lo: 10, hi: 20, min: 9 };
+    const every = cfg.every;
     for (let t = 30; t < path.length - 20; t += every * rng.range(0.7, 1.3)) {
       const p = path.at(t), tg = path.tangent(t);
       const side = rng.float() < 0.5 ? -1 : 1;
-      const lat = side * rng.range(id === 'wadi' ? 22 : 10, id === 'wadi' ? 34 : 20);
+      const lat = side * rng.range(cfg.lo, cfg.hi);
       const x = p.x - tg.z * lat, z = p.z + tg.x * lat;
-      if (ok(x, z, 9)) add(x, z, rng.range(0.8, 1.9));
+      if (ok(x, z, cfg.min)) add(x, z, rng.range(0.8, 1.9));
       // Small cluster companion.
-      if (rng.float() < 0.5) { const cx = x + rng.range(-4, 4), cz = z + rng.range(-4, 4); if (ok(cx, cz, 9)) add(cx, cz, rng.range(0.35, 0.8)); }
+      if (rng.float() < 0.5) { const cx = x + rng.range(-4, 4), cz = z + rng.range(-4, 4); if (ok(cx, cz, cfg.min)) add(cx, cz, rng.range(0.35, 0.8)); }
     }
   }
   // Scatter over rocky ground across the whole map.

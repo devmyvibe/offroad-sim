@@ -1,6 +1,6 @@
 import type { Vec2 } from '../terrain/Heightmap';
 
-export type TrailKind = 'wadi' | 'crossings' | 'technical';
+export type TrailKind = 'wadi' | 'crossings' | 'technical' | 'twister';
 
 export interface TrailDef {
   id: string;
@@ -54,6 +54,19 @@ export const TRAILS: TrailDef[] = [
       { x: 150, z: -110 }, { x: 205, z: -150 }, { x: 265, z: -170 }, { x: 325, z: -205 }, { x: 385, z: -250 },
       { x: 430, z: -300 }, { x: 465, z: -350 }, { x: 495, z: -400 }, { x: 530, z: -450 }, { x: 560, z: -500 },
       { x: 590, z: -545 }, { x: 615, z: -590 }, { x: 640, z: -625 },
+    ],
+  },
+  {
+    id: 'twister',
+    kind: 'twister',
+    difficulty: 3,
+    recommended: '4L',
+    checkpointEvery: 140,
+    starTimes: [330_000, 500_000],
+    ctrl: [
+      { x: -345, z: 300 }, { x: -395, z: 322 }, { x: -450, z: 345 }, { x: -505, z: 375 }, { x: -550, z: 415 },
+      { x: -585, z: 460 }, { x: -615, z: 510 }, { x: -655, z: 550 }, { x: -700, z: 585 }, { x: -735, z: 630 },
+      { x: -748, z: 680 }, { x: -720, z: 720 }, { x: -670, z: 738 },
     ],
   },
 ];
